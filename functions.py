@@ -1,13 +1,19 @@
 # Functions to be imported
-from os import sep
 import pandas as pd
 import numpy as np
 from pathlib import Path
 import re
 
-def get_csv_data(csv_main_path, file_name):
+def get_path(text_input: str):
     home = Path.home()
-    file_path = str(home) + csv_main_path + file_name + '.csv'
+    file_path = str(home) + 'stored-data-paths.csv'
+    df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
+    new_dict = df_csv.to_dict()['PATH']
+    return new_dict[text_input]
+
+def get_csv_data(path_name: str):
+    home = Path.home()
+    file_path = str(home) + get_path(path_name)
     file = pd.read_csv(file_path, sep=';', header=0, index_col=None, skipinitialspace=True)
     df = pd.DataFrame(file, index=None)
     return df

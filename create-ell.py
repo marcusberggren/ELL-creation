@@ -11,13 +11,6 @@ from pathlib import Path
 def main():
     create_ell()
 
-def define_path():
-
-    csv_main_path = r'\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-'
-
-
-    return csv_main_path
-
 def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage, leg, pol):
 
     wb_caller_path = xw.Book.caller().fullname
@@ -55,12 +48,10 @@ def create_ell():
     pol = sheet.range('D2').value
     
     #Skapar 4 olika data frames från CSV-filer
-    csv_main_path = define_path()
-
-    df_cargo_type = get_csv_data(csv_main_path, 'cargo-type').copy()
-    df_country = get_csv_data(csv_main_path, 'country').copy()
-    df_mlo = get_csv_data(csv_main_path, 'mlo').copy()
-    df_ocean_vessel = get_csv_data(csv_main_path, 'ocean-vessel').copy()
+    df_cargo_type = get_csv_data('cargo_type').copy()
+    df_country = get_csv_data('country').copy()
+    df_mlo = get_csv_data('mlo').copy()
+    df_ocean_vessel = get_csv_data('ocean_vessel').copy()
     
 
     # Regex som byter ut white spaces i början och slutet på varje instans i dataframe
