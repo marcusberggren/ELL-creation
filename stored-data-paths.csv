@@ -12,6 +12,7 @@ tpl_cargo_type;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-templa
 tpl_terminal;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-terminal.csv
 tpl_vessels;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-vessels.csv
 terminal;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-terminal.csv
-tpl_dcm;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-dcm.csv
-tpl_ell;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-ell.csv
-tpl_rlb;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-rlb.csv
+tpl_dcm;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-dcm.xlsx
+tpl_ell;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-ell.xlsx
+tpl_rlb;\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-rlb.xlsx
+tpl_cbf;\BOLLORE\XPF - Documents\MAINTENANCE\template-cbf-cos.xlsx

@@ -2,7 +2,8 @@ import pandas as pd
 from pandas.api.types import CategoricalDtype
 import xlwings as xw
 import os
-from pathlib import Path
+from functions import get_path
+from datetime import datetime
 
 def main():
 
@@ -113,14 +114,17 @@ def main():
         return lista_terminaler
 
     with xw.App(visible=False) as app:
-        home = Path.home()
-        whole_path = home / 'BOLLORE\XPF - Documents\MAINTENANCE\MLO_COS_CBF_SEGOT.xls'
-        wb = app.books.open(whole_path)
-        
+        cbf_path = get_path('tpl_cbf')
+        wb = app.books.open(cbf_path)
         wb_caller = xw.Book.caller()
         wb_caller_name = wb_caller.fullname
         folder_path = os.path.split(wb_caller_name)[0]
-        filename = 'CBF_'+ vessel + '_' + str(alt_voy) +'_' + pol + '.xlsx'
+        time_str = datetime.now().strftime("%y%m%d")
+
+        if vessel == "":
+            vessel = "TBA"
+
+        filename = "CBF_" + vessel + "_" + str(alt_voy) + "_" + pol + "_" + time_str + ".xlsx"
         dir_path = os.path.join(folder_path, filename)
         
         ws = wb.sheets['CBF TTL']

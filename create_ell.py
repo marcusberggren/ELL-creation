@@ -1,10 +1,9 @@
 import xlwings as xw
 import pandas as pd
-from functions import get_csv_data, regex_no_extra_whitespace, get_tare, get_max_weight
+from functions import get_csv_data, regex_no_extra_whitespace, get_tare, get_max_weight, get_path
 import numpy as np
 from datetime import datetime
 import os
-from pathlib import Path
 
 
 
@@ -18,12 +17,9 @@ def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage
     time_str = datetime.now().strftime("%y%m%d")
     ell_file_name = "ELL_" + vessel + "_" + str(voyage[:5]) + "_" + pol + "_" + time_str + ".xlsx"
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
-
-    home = Path.home()
-    ell_template_path = str(home) + r'\BOLLORE\XPF - Documents\MAINTENANCE\templates\template-ell.xlsx'
     
     with xw.App(visible=False) as app:
-        wb = app.books.open(ell_template_path)
+        wb = app.books.open(get_path('tpl_ell'))
         cargo_detail_sheet = wb.sheets['Cargo Detail']
         manifest_sheet = wb.sheets['Manifest']
         cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
@@ -212,6 +208,6 @@ def create_ell():
     
 
 if __name__ == '__main__':
-    xw.Book(r'C:\Users\SWV224\BOLLORE\XPF - Documents\0109_Bokningsblad_TEST_2-BSEGOTL116844.xlsb')
+    xw.Book(r'C:\Users\SWV224\BOLLORE\XPF - Documents\0109_Bokningsblad_TEST.xlsb')
 
     create_ell()

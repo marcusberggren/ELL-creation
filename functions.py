@@ -3,17 +3,20 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import re
+import os
 
 def get_path(text_input: str):
-    home = Path.home()
-    file_path = str(home) + 'stored-data-paths.csv'
+    home = str(Path.home())
+    func_path = get_path.__code__.co_filename
+    trimmed_path = re.sub(r"\w+.py$", "", func_path)    #Tar bort sista ordet + .py i path.
+    file_path = trimmed_path + 'stored-data-paths.csv'
     df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
     new_dict = df_csv.to_dict()['PATH']
-    return new_dict[text_input]
+    return_path = home + new_dict[text_input]
+    return return_path
 
 def get_csv_data(path_name: str):
-    home = Path.home()
-    file_path = str(home) + get_path(path_name)
+    file_path = get_path(path_name)
     file = pd.read_csv(file_path, sep=';', header=0, index_col=None, skipinitialspace=True)
     df = pd.DataFrame(file, index=None)
     return df
@@ -60,9 +63,8 @@ def container_check(container_no: str):
         else:
             return False
 
-def terminal_check(csv_main_path, df: pd.DataFrame):
-    terminal = 'terminal'
-    df_csv = get_csv_data(csv_main_path, terminal)
+def terminal_check(df: pd.DataFrame):
+    df_csv = get_csv_data('terminal')
 
     df_csv['CONCAT'] = df_csv['PORT'] + df_csv['TERMINAL']
     df['CONCAT'] = df['POL'] + df['TOL']
@@ -71,17 +73,14 @@ def terminal_check(csv_main_path, df: pd.DataFrame):
     df.loc[np.logical_not(df['CONCAT'].isin(df_csv['CONCAT'])), 'TERMINAL_CHECK'] = False
     return df['TERMINAL_CHECK']
 
-def MLO_check(csv_main_path, df: pd.DataFrame):
-    mlo = 'mlo'
-    df_csv = get_csv_data(csv_main_path, mlo)
-
+def MLO_check(df: pd.DataFrame):
+    df_csv = get_csv_data('mlo')
     df.loc[df['MLO'].isin(df_csv['MLO']), 'MLO_CHECK'] = True
     df.loc[np.logical_not(df['MLO'].isin(df_csv['MLO'])), 'MLO_CHECK'] = False
     return df['MLO_CHECK']
 
-def cargo_type_check(csv_main_path, df: pd.DataFrame):
-    cargo_type = 'cargo-type'
-    df_csv = get_csv_data(csv_main_path, cargo_type)
+def cargo_type_check(df: pd.DataFrame):
+    df_csv = get_csv_data('cargo_type')
     df['ISO TYPE'] = df['ISO TYPE'].astype(str)
 
     df['CONCAT'] = df['ISO TYPE'] +  df['LOAD STATUS']
@@ -89,10 +88,8 @@ def cargo_type_check(csv_main_path, df: pd.DataFrame):
     df.loc[np.logical_not(df['CONCAT'].isin(df_csv['ISO STATUS'])), 'CARGO_TYPE_CHECK'] = False
     return df['CARGO_TYPE_CHECK']
 
-def load_status_check(csv_main_path, df: pd.DataFrame):
-    load_status = 'load-status'
-    df_csv = get_csv_data(csv_main_path, load_status)
-
+def load_status_check(df: pd.DataFrame):
+    df_csv = get_csv_data('load_status')
     df.loc[df['LOAD STATUS'].isin(df_csv['LOAD STATUS']), 'LOAD_STATUS_CHECK'] = True
     df.loc[np.logical_not(df['LOAD STATUS'].isin(df_csv['LOAD STATUS'])), 'LOAD_STATUS_CHECK'] = False
     df.loc[df['LOAD STATUS'].str.contains("MT"), 'LOAD_STATUS_CHECK'] = "MT"
@@ -102,16 +99,14 @@ def reefer_check(df: pd.DataFrame):
     df.loc[:, 'TEMP_CHECK'] = True
     df.loc[(df['ISO TYPE'].str.contains("R1")) & (df['TEMP'].isnull()), 'TEMP_CHECK'] = False
     df.loc[(df['LOAD STATUS'].str.contains("RF")) & (df['TEMP'].isnull()), 'TEMP_CHECK'] = False
-    
     df.loc[(np.logical_not(df['ISO TYPE'].str.contains("R1"))) &    #np.logical_not to reverse the boolean
         (np.logical_not(df['LOAD STATUS'].str.contains("RF"))) &
         (df['TEMP'].notnull()), 'TEMP_CHECK'] = False
     df.loc[(df['ISO TYPE'].str.contains("R1")) & (df['TEMP'].notnull()), 'TEMP_CHECK'] = True
     return df['TEMP_CHECK']
 
-def customs_status_check(csv_main_path, df: pd.DataFrame):
-    eu_countries = 'eu'
-    df_csv = get_csv_data(csv_main_path, eu_countries)
+def customs_status_check(df: pd.DataFrame):
+    df_csv = get_csv_data('eu')
 
     #Empty and if EU contry
     df.loc[df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']), 'CUSTOMS_CHECK'] = "C"
@@ -141,7 +136,6 @@ def get_TEUs(df: pd.DataFrame):
             (df['ISO TYPE'].str[:1] == "L")
         ]
     values_teu = [1, 2, 2, 2]
-
     result = np.select(conditions_teu, values_teu)
     return result
 
@@ -153,16 +147,12 @@ def get_tare(df: pd.DataFrame):
             (df['ISO TYPE'].str[:1] == "L")
         ]
     values_tare = [2200, 3200, 4000, 4000]
-
     result = np.select(conditions_tare, values_tare)
     return result
 
-def get_template_type(csv_main_path: str, df: pd.DataFrame, template: list):
-    home = Path.home()
-    file_path = str(home) + csv_main_path + template[0] + '.csv'
-
+def get_template_type(df: pd.DataFrame, template: list):
+    file_path = get_path(template[0])
     df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
     new_dict = df_csv.to_dict()[template[1]]
-
     df = df[template[2]].replace(new_dict).copy()
     return df
