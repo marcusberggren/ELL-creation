@@ -1,4 +1,3 @@
-from ast import IsNot
 from operator import index
 import re
 import pandas as pd
@@ -7,8 +6,7 @@ from tkinter import filedialog
 import xlwings as xw
 
 def main():
-    
-    copy = copy_data()
+    copy_data()
 
 def chosen_file():
     root = tk.Tk()

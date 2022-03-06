@@ -1,7 +1,7 @@
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 import xlwings as xw
-import os as os
+import os
 from pathlib import Path
 
 def main():
