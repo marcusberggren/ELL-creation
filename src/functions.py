@@ -7,8 +7,8 @@ import re
 def get_path(text_input: str):
     home = str(Path.home())
     func_path = get_path.__code__.co_filename
-    trimmed_path = re.sub(r"\w+.py$", "", func_path)    #Tar bort sista ordet + .py i path.
-    file_path = trimmed_path + 'stored-data-paths.csv'
+    trimmed_path = re.sub(r"\w+\\\w+\.py$", "", func_path)    #Tar bort sista två orden + .py i path
+    file_path = trimmed_path + 'data\stored-data-paths.csv'
     df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
     new_dict = df_csv.to_dict()['PATH']
     return_path = home + new_dict[text_input]
@@ -22,8 +22,8 @@ def get_csv_data(path_name: str):
 
 def get_mock_caller(excel_file: str):
     func_path = get_path.__code__.co_filename
-    trimmed_path = re.sub(r"\w+.py$", "", func_path)    #Tar bort sista ordet + .py i path.
-    file_path = trimmed_path + excel_file
+    trimmed_path = re.sub(r"\w+\\\w+\.py$", "", func_path)    #Tar bort sista två orden + .py i path
+    file_path = trimmed_path + 'data\\' + excel_file
     return file_path
 
 def regex_no_extra_whitespace(df: pd.DataFrame):
