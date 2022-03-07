@@ -1,6 +1,6 @@
 import xlwings as xw
 import pandas as pd
-from functions import get_csv_data, regex_no_extra_whitespace, get_tare, get_max_weight, get_path
+from functions import get_csv_data, regex_no_extra_whitespace, get_tare, get_max_weight, get_path, get_mock_caller
 import numpy as np
 from datetime import datetime
 import os
@@ -191,7 +191,6 @@ def manifest(df: pd.DataFrame):
     return df_manifest
 
 def create_ell():
-
     wb = xw.Book.caller()
     sheet = wb.sheets('INFO')
     data_table = sheet.range('A4').expand()
@@ -201,15 +200,13 @@ def create_ell():
     voyage = str(sheet.range('B2').value)
     leg = sheet.range('C2').value
     pol = sheet.range('D2').value
-
     create_ell.pol = pol
 
     df = work_with_df(df).copy()
-    
     return copy_sheets_to_workbook(cargo_detail(df), manifest(df), vessel, voyage, leg, pol)
 
 
 if __name__ == '__main__':
-    xw.Book(r'C:\Users\SWV224\BOLLORE\XPF - Documents\0109_Bokningsblad_TEST.xlsb')
-
+    file_path = get_mock_caller('0109_Bokningsblad.xlsb')
+    xw.Book(file_path).set_mock_caller()
     create_ell()

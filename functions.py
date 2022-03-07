@@ -20,6 +20,12 @@ def get_csv_data(path_name: str):
     df = pd.DataFrame(file, index=None)
     return df
 
+def get_mock_caller(excel_file: str):
+    func_path = get_path.__code__.co_filename
+    trimmed_path = re.sub(r"\w+.py$", "", func_path)    #Tar bort sista ordet + .py i path.
+    file_path = trimmed_path + excel_file
+    return file_path
+
 def regex_no_extra_whitespace(df: pd.DataFrame):
     df = df.replace(r"^\s+|\s+$", "", regex=True).copy()
     return df
