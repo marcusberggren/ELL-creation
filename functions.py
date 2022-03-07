@@ -59,11 +59,11 @@ def container_check(container_no: str):
             elif re.search('[0-9]', character):
                 summa += int(character) * value_multiply
 
-        summa_ändrad = int(summa/11) * 11
+        sum_changed = int(summa/11) * 11
  
-        if summa - summa_ändrad == 10 and int(container_no[len_cont-1]) == 0:
+        if summa - sum_changed == 10 and int(container_no[len_cont-1]) == 0:
             return True
-        elif summa - summa_ändrad == int(container_no[len_cont-1]):
+        elif summa - sum_changed == int(container_no[len_cont-1]):
             return True
         else:
             return False
