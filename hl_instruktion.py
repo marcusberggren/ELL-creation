@@ -1,4 +1,3 @@
-from operator import index
 import re
 import pandas as pd
 import tkinter as tk

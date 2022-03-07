@@ -8,25 +8,27 @@ from datetime import datetime
 def main():
 
     wb = xw.Book.caller()
-    sheet = wb.sheets('Info')
+    sheet = wb.sheets('INFO')
 
-    vessel = sheet.range('B1').value
-    alt_voy = sheet.range('I1').value
-    pol = sheet.range('N1').value
-    date = str(sheet.range('K1').value)
+    vessel = sheet.range('A2').value
+    alt_voy = sheet.range('F2').value
+    pol = sheet.range('D2').value
 
-    cell_range = sheet.range('A3').expand() #dynamisk range
+    if alt_voy is None:
+        alt_voy = "TBA"
+
+    cell_range = sheet.range('A4').expand() #dynamisk range
     df = sheet.range(cell_range).options(pd.DataFrame, index=False, header=True).value #dynamisk range
 
-    df = df[['TERMINAL', 'ISO TYPE', 'LOAD STATUS', 'NET WEIGHT', 'VGM']]
+    df = df[['TOL', 'ISO TYPE', 'LOAD STATUS', 'NET WEIGHT', 'VGM']].copy()
 
     #När NET WEIGHT är mindre än 100 men större än 0 så multiplicera med 1000
     df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'NET WEIGHT'] *= 1000
 
     #Skapar ny kolumn med maxvärde av NET WEIGHT & VGM
-    df['MAX WEIGHT'] = df[['NET WEIGHT', 'VGM']].max(axis=1) // 1000  
+    df.loc[:, 'MAX WEIGHT'] = df[['NET WEIGHT', 'VGM']].max(axis=1) // 1000  
 
-    df = df[['TERMINAL', 'ISO TYPE', 'LOAD STATUS', 'MAX WEIGHT']]
+    df = df[['TOL', 'ISO TYPE', 'LOAD STATUS', 'MAX WEIGHT']].copy()
 
     df.loc[df['LOAD STATUS'] != 'MT', 'LOAD STATUS'] = 'LA'
 
@@ -57,31 +59,31 @@ def main():
 
     df['WEIGHT_TYPE'] = df['WEIGHT_TYPE'].astype(cat_size_order)
 
-    df.sort_values(['WEIGHT_TYPE', 'TERMINAL'], ascending=(True, False))
+    df.sort_values(['WEIGHT_TYPE', 'TOL'], ascending=(True, False))
 
-    df = df.groupby(['TERMINAL', 'WEIGHT_TYPE']).size().iteritems()        #groupby och size för att skapa hanterlig strukturerad data. Kan iterera över datan nedan mha iteritems
+    df = df.groupby(['TOL', 'WEIGHT_TYPE']).size().iteritems()        #groupby och size för att skapa hanterlig strukturerad data. Kan iterera över datan nedan mha iteritems
 
     
 
     dict1 = {}
 
-    for (terminal, iso_type), antal in df:              #tar fram nestlad info (terminal, iso_type) och antal från ovan
-        if terminal not in dict1:
-            dict1[terminal] = {}
-        dict1[terminal].update({iso_type:antal})
+    for (TOL, iso_type), antal in df:              #tar fram nestlad info (TOL, iso_type) och antal från ovan
+        if TOL not in dict1:
+            dict1[TOL] = {}
+        dict1[TOL].update({iso_type:antal})
 
-    terminal = ""
+    TOL = ""
     index = 0
 
     lista_weight_type = []
     create_nested_list = []
-    lista_terminal = []
-    lista_unika_terminaler = []
+    lista_TOL = []
+    lista_unika_TOLer = []
 
-    for terminal in dict1:
-        lista_unika_terminaler.append(terminal)
+    for TOL in dict1:
+        lista_unika_TOLer.append(TOL)
 
-        for index, weight_type in enumerate(dict1[terminal].values()):
+        for index, weight_type in enumerate(dict1[TOL].values()):
 
             if index % 3 == 2:
                 lista_weight_type.append(weight_type)
@@ -89,29 +91,29 @@ def main():
                 lista_weight_type = []
             else:
                 lista_weight_type.append(weight_type)
-        lista_terminal.append(create_nested_list)
+        lista_TOL.append(create_nested_list)
         create_nested_list = []
 
-    df_new = pd.DataFrame(lista_terminal)
+    df_new = pd.DataFrame(lista_TOL)
 
-    def get_terminal(lista_terminaler):
+    def get_TOL(lista_TOLer):
         i = 0
-        for i, terminal in enumerate(lista_terminaler):
+        for i, TOL in enumerate(lista_TOLer):
 
-            if terminal == "NLEDE":
-                lista_terminaler[i] = "RTM-DDE"
-            elif terminal == "NLEMX":
-                lista_terminaler[i] = "RTM-EMX"
-            elif terminal == "NLRWG":
-                lista_terminaler[i] = "RTM-RWG"
-            elif terminal == "DECTB":
-                lista_terminaler[i] = "HAM-CTB"
-            elif terminal == "DECTA":
-                lista_terminaler[i] = "HAM-CTA"
-            elif terminal == "DETCT":
-                lista_terminaler[i] = "HAM-CTT"
+            if TOL == "NLEDE":
+                lista_TOLer[i] = "RTM-DDE"
+            elif TOL == "NLEMX":
+                lista_TOLer[i] = "RTM-EMX"
+            elif TOL == "NLRWG":
+                lista_TOLer[i] = "RTM-RWG"
+            elif TOL == "DECTB":
+                lista_TOLer[i] = "HAM-CTB"
+            elif TOL == "DECTA":
+                lista_TOLer[i] = "HAM-CTA"
+            elif TOL == "DETCT":
+                lista_TOLer[i] = "HAM-CTT"
 
-        return lista_terminaler
+        return lista_TOLer
 
     with xw.App(visible=False) as app:
         cbf_path = get_path('tpl_cbf')
@@ -121,8 +123,7 @@ def main():
         folder_path = os.path.split(wb_caller_name)[0]
         time_str = datetime.now().strftime("%y%m%d")
 
-        if vessel == "":
-            vessel = "TBA"
+
 
         filename = "CBF_" + vessel + "_" + str(alt_voy) + "_" + pol + "_" + time_str + ".xlsx"
         dir_path = os.path.join(folder_path, filename)
@@ -131,12 +132,11 @@ def main():
         ws.range('B3').value = vessel
         ws.range('B4').value = alt_voy
         ws.range('I3').value = pol
-        ws.range('I4').value = date[:10]
 
-        terminal, cell, i = "", 8, 0
-        for i, terminal in enumerate(get_terminal(lista_unika_terminaler)):
+        TOL, cell, i = "", 8, 0
+        for i, TOL in enumerate(get_TOL(lista_unika_TOLer)):
             
-            ws.range('A' + str(cell + 1)).options(index=False, header=False).value = terminal
+            ws.range('A' + str(cell + 1)).options(index=False, header=False).value = TOL
             
             ws.range('C' + str(cell)).options(index=False, header=False).value = df_new[0][i]
             ws.range('C' + str(cell + 1)).options(index=False, header=False).value = df_new[1][i]

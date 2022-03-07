@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import re
-import os
 
 def get_path(text_input: str):
     home = str(Path.home())
@@ -108,7 +107,7 @@ def reefer_check(df: pd.DataFrame):
 def customs_status_check(df: pd.DataFrame):
     df_csv = get_csv_data('eu')
 
-    #Empty and if EU contry
+    #Empty and if EU country
     df.loc[df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']), 'CUSTOMS_CHECK'] = "C"
     df.loc[df['LOAD STATUS'].str.contains("MT"), 'CUSTOMS_CHECK'] = "C"
 
