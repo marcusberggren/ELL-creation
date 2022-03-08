@@ -1,10 +1,9 @@
 import xlwings as xw
 import pandas as pd
-from functions import get_csv_data, regex_no_extra_whitespace, get_tare, get_max_weight, get_path, get_mock_caller
+import functions as fn
 import numpy as np
 from datetime import datetime
 import os
-
 
 
 def main():
@@ -19,7 +18,7 @@ def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
     
     with xw.App(visible=False) as app:
-        wb = app.books.open(get_path('tpl_ell'))
+        wb = app.books.open(fn.get_path()('tpl_ell'))
         cargo_detail_sheet = wb.sheets['Cargo Detail']
         manifest_sheet = wb.sheets['Manifest']
         cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
@@ -34,16 +33,17 @@ def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage
 def work_with_df(df: pd.DataFrame):
         
     #Skapar 4 olika data frames från CSV-filer
-    df_cargo_type = get_csv_data('cargo_type').copy()
-    df_country = get_csv_data('country').copy()
-    df_mlo = get_csv_data('mlo').copy()
-    df_ocean_vessel = get_csv_data('ocean_vessel').copy()
+    df_cargo_type = fn.get_csv_data()('cargo_type').copy()
+    df_country = fn.get_csv_data()('country').copy()
+    df_mlo = fn.get_csv_data()('mlo').copy()
+    df_ocean_vessel = fn.get_csv_data()('ocean_vessel').copy()
 
     # Regex som byter ut white spaces i början och slutet på varje instans i dataframe
-    df = regex_no_extra_whitespace(df).copy()
-    df_cargo_type = regex_no_extra_whitespace(df_cargo_type).copy()
-    df_country = regex_no_extra_whitespace(df_country).copy()
-    df_mlo = regex_no_extra_whitespace(df_mlo).copy()
+    df = fn.regex_no_extra_whitespace()(df).copy()
+    df_cargo_type = fn.regex_no_extra_whitespace()(df_cargo_type).copy()
+    df_country = fn.regex_no_extra_whitespace()(df_country).copy()
+    df_mlo = fn.regex_no_extra_whitespace()(df_mlo).copy()
+    df_ocean_vessel = fn.regex_no_extra_whitespace()(df_ocean_vessel).copy()
 
     # Sätter ihop ISO TYPE och LOAD STATUS
     df.loc[:, 'ISO TYPE'] = df['ISO TYPE'].astype(str)
@@ -93,7 +93,7 @@ def work_with_df(df: pd.DataFrame):
     df = df.merge(df_country, on='PORT', how='left', suffixes=('_CONSIGNEE','_SHIPPER')).copy()
 
     # Slår ihop flera conditions och sätter taravikterna rätt i df['TARE']
-    df.loc[:, 'TARE'] = get_tare(df)
+    df.loc[:, 'TARE'] = fn.get_tare(df)
 
     """
     Beskrivning av get_max_weight:
@@ -101,7 +101,7 @@ def work_with_df(df: pd.DataFrame):
     - om NET WEIGHT < 100 och inte 0 multipliceras värdet med 1000
     - om VGM > 0 skrivs maxvärdet ut av NET WEIGHT och VGM
     """
-    df.loc[:, 'MAX WEIGHT'] = get_max_weight(df) / 1000   # div med 1000 för tonvikt
+    df.loc[:, 'MAX WEIGHT'] = fn.get_max_weight(df) / 1000   # div med 1000 för tonvikt
 
     # Lägger till vikt i 'VGM-LA' om inte "MT" i kolumn
     mt_check = df['LOAD STATUS'] != "MT"
@@ -119,7 +119,7 @@ def work_with_df(df: pd.DataFrame):
 
 
 def cargo_detail(df: pd.DataFrame):
-    df_cargo_detail = pd.DataFrame(columns=['Pod', 'Pod call seq', 'Pod terminal', 'Pod Status', 'POL',
+    df_cd = pd.DataFrame(columns=['Pod', 'Pod call seq', 'Pod terminal', 'Pod Status', 'POL',
     'Pol terminal', 'Pol Status', 'Shunted Terminal', 'Slot Owner', 'Slot Account', 'MLO', 'MLO PO',
     'Booking Reference', 'Ex Vessel', 'Ex Voyage', 'Next Vessel', 'Next Voyage', 'Mother Vessel',
     'Mother Vessel CallSign', 'Mother Voyage', 'POT', 'F.Destination', 'VIA', 'VIA terminal', 'Cargo type',
@@ -129,66 +129,66 @@ def cargo_detail(df: pd.DataFrame):
     'VGM Weight in MT', 'VGM Cert Signatory', 'VGM Certificate No', 'VGM Weighing Method',
     'VGM Cert Issuing Party', 'VGM Cert Issuing Address', 'VGM Cert Issue Date'])
 
-    df_cargo_detail['Pod'] = df['POL']
-    df_cargo_detail['Pod call seq'] = 1
-    df_cargo_detail['Pod terminal'] = df['TOL']
-    df_cargo_detail['Pod Status'] = "T"
-    df_cargo_detail['POL'] = create_ell.pol
-    df_cargo_detail['Pol terminal'] = create_ell.pol
-    df_cargo_detail['Pol Status'] = "L"
-    df_cargo_detail['Slot Owner'] = "XCL"
-    df_cargo_detail['Slot Account'] = "XCL"
-    df_cargo_detail['MLO'] = df['MLO']
-    df_cargo_detail['MLO PO'] = df['PO NUMBER']
-    df_cargo_detail['Booking Reference'] = df['BOOKING NUMBER']
-    df_cargo_detail['Mother Vessel'] = df['OCEAN VESSEL']
-    df_cargo_detail['Mother Vessel CallSign'] = df['CALL SIGN']
-    df_cargo_detail['Mother Voyage'] = df['VOYAGE']
-    df_cargo_detail['F.Destination'] = df['FINAL POD']
-    df_cargo_detail['Cargo type'] = df['T6 CARGO TYPE']
-    df_cargo_detail['ISO Container Type'] = df['ISO TYPE']
-    df_cargo_detail['User Container Type'] = df['ISO TYPE']
-    df_cargo_detail['Commodity'] = df['LOAD STATUS']
-    df_cargo_detail['Container No'] = df['CONTAINER']
-    df_cargo_detail['Weight in MT'] = df['MAX WEIGHT']
-    df_cargo_detail['IMCO'] = df['IMDG']
-    df_cargo_detail['UN'] = df['UNNR']
-    df_cargo_detail['IMO Name'] = df['CHEM'] ## ADD?
-    df_cargo_detail['Remarks'] = df['CHEM REF']
-    df_cargo_detail['VGM Weight in MT'] = df['VGM-LA']
-    return df_cargo_detail
+    df_cd.loc[:, 'Pod'] = df['POL']
+    df_cd.loc[:, 'Pod call seq'] = 1
+    df_cd.loc[:, 'Pod terminal'] = df['TOL']
+    df_cd.loc[:, 'Pod Status'] = "T"
+    df_cd.loc[:, 'POL'] = create_ell.pol
+    df_cd.loc[:, 'Pol terminal'] = create_ell.pol
+    df_cd.loc[:, 'Pol Status'] = "L"
+    df_cd.loc[:, 'Slot Owner'] = "XCL"
+    df_cd.loc[:, 'Slot Account'] = "XCL"
+    df_cd.loc[:, 'MLO'] = df['MLO']
+    df_cd.loc[:, 'MLO PO'] = df['PO NUMBER']
+    df_cd.loc[:, 'Booking Reference'] = df['BOOKING NUMBER']
+    df_cd.loc[:, 'Mother Vessel'] = df['OCEAN VESSEL']
+    df_cd.loc[:, 'Mother Vessel CallSign'] = df['CALL SIGN']
+    df_cd.loc[:, 'Mother Voyage'] = df['VOYAGE']
+    df_cd.loc[:, 'F.Destination'] = df['FINAL POD']
+    df_cd.loc[:, 'Cargo type'] = df['T6 CARGO TYPE']
+    df_cd.loc[:, 'ISO Container Type'] = df['ISO TYPE']
+    df_cd.loc[:, 'User Container Type'] = df['ISO TYPE']
+    df_cd.loc[:, 'Commodity'] = df['LOAD STATUS']
+    df_cd.loc[:, 'Container No'] = df['CONTAINER']
+    df_cd.loc[:, 'Weight in MT'] = df['MAX WEIGHT']
+    df_cd.loc[:, 'IMCO'] = df['IMDG']
+    df_cd.loc[:, 'UN'] = df['UNNR']
+    df_cd.loc[:, 'IMO Name'] = df['CHEM'] ## ADD?
+    df_cd.loc[:, 'Remarks'] = df['CHEM REF']
+    df_cd.loc[:, 'VGM Weight in MT'] = df['VGM-LA']
+    return df_cd
 
 def manifest(df: pd.DataFrame):
 
-    df_manifest = pd.DataFrame(columns=['Pod Terminal', 'MLO', 'B/L No', 'MLO PO', 'Booking Reference',
+    df_man = pd.DataFrame(columns=['Pod Terminal', 'MLO', 'B/L No', 'MLO PO', 'Booking Reference',
     'OBL Reference', 'Marks & Nos', 'No of Cntr', 'Type', 'Stc', 'No of Packages', 'Unit', 'Goods Desc',
     'Cargo Status', 'Transhipment', 'Seal No', 'Tare Weight in Kilos', 'Net Weight in Kilos',
     'Deep Sea Vessel', 'ETA', 'Rcvr', 'Shipper', 'Consignee', 'Notify', 'Product ID', 'Volume (Meter)',
     'Marks', 'MRN Number', 'Remarks', 'Port of Origin', 'Export PO', 'Package Content'])
 
-    df_manifest['Pod Terminal'] = df['POL']
-    df_manifest['MLO'] = df['MLO']
-    df_manifest['MLO PO'] = df['PO NUMBER']
-    df_manifest['Booking Reference'] = df['BOOKING NUMBER']
-    df_manifest['Marks & Nos'] = df['CONTAINER']
-    df_manifest['No of Cntr'] = 1
-    df_manifest['Type'] = df['T6 CARGO TYPE']
-    df_manifest['Stc'] = "STC"
-    df_manifest['No of Packages'] = df['PACKAGES']
-    df_manifest['Unit'] = "PK"
-    df_manifest['Goods Desc'] = df['GOODS+MRN']
-    df_manifest['Cargo Status'] = df['CUSTOMS STATUS']
-    df_manifest['Transhipment'] = df['TRANSHIPMENT']
-    df_manifest['Tare Weight in Kilos'] = df['TARE']
-    df_manifest['Net Weight in Kilos'] = df['NET WEIGHT']
-    df_manifest['Deep Sea Vessel'] = df['OCEAN VESSEL']
-    df_manifest['ETA'] = df['ETA']
-    df_manifest['Shipper'] = df['SHIPPER'] + " " + df['COUNTRY_SHIPPER']
-    df_manifest['Consignee'] = df['CONSIGNEE'] + " " + df['COUNTRY_CONSIGNEE']
-    df_manifest['Notify'] = df_manifest['Consignee']
-    df_manifest['MRN Number'] = df['MRN']
-    df_manifest['Package Content'] = df['GOODS DESCRIPTION']
-    return df_manifest
+    df_man.loc[:, 'Pod Terminal'] = df['POL']
+    df_man.loc[:, 'MLO'] = df['MLO']
+    df_man.loc[:, 'MLO PO'] = df['PO NUMBER']
+    df_man.loc[:, 'Booking Reference'] = df['BOOKING NUMBER']
+    df_man.loc[:, 'Marks & Nos'] = df['CONTAINER']
+    df_man.loc[:, 'No of Cntr'] = 1
+    df_man.loc[:, 'Type'] = df['T6 CARGO TYPE']
+    df_man.loc[:, 'Stc'] = "STC"
+    df_man.loc[:, 'No of Packages'] = df['PACKAGES']
+    df_man.loc[:, 'Unit'] = "PK"
+    df_man.loc[:, 'Goods Desc'] = df['GOODS+MRN']
+    df_man.loc[:, 'Cargo Status'] = df['CUSTOMS STATUS']
+    df_man.loc[:, 'Transhipment'] = df['TRANSHIPMENT']
+    df_man.loc[:, 'Tare Weight in Kilos'] = df['TARE']
+    df_man.loc[:, 'Net Weight in Kilos'] = df['NET WEIGHT']
+    df_man.loc[:, 'Deep Sea Vessel'] = df['OCEAN VESSEL']
+    df_man.loc[:, 'ETA'] = df['ETA']
+    df_man.loc[:, 'Shipper'] = df['SHIPPER'] + " " + df['COUNTRY_SHIPPER']
+    df_man.loc[:, 'Consignee'] = df['CONSIGNEE'] + " " + df['COUNTRY_CONSIGNEE']
+    df_man.loc[:, 'Notify'] = df_man['Consignee']
+    df_man.loc[:, 'MRN Number'] = df['MRN']
+    df_man.loc[:, 'Package Content'] = df['GOODS DESCRIPTION']
+    return df_man
 
 def create_ell():
     wb = xw.Book.caller()
@@ -207,6 +207,6 @@ def create_ell():
 
 
 if __name__ == '__main__':
-    file_path = get_mock_caller('0109_Bokningsblad.xlsb')
+    file_path = fn.get_mock_caller('0109_Bokningsblad.xlsb')
     xw.Book(file_path).set_mock_caller()
     create_ell()

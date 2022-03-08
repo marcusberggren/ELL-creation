@@ -1,4 +1,5 @@
 # Functions to be imported
+import xlwings as xw
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -18,6 +19,18 @@ def get_csv_data(path_name: str):
     file_path = get_path(path_name)
     file = pd.read_csv(file_path, sep=';', header=0, index_col=None, skipinitialspace=True)
     df = pd.DataFrame(file, index=None)
+    return df
+
+def get_caller_df():
+    wb = xw.Book.caller()
+    sheet = wb.sheets('INFO')
+    data_table = sheet.range('A4').expand()
+    df = sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
+    df = regex_no_extra_whitespace(df).copy()
+    
+    get_caller_df.vessel = sheet.range('A2').value
+    get_caller_df.voyage = str(sheet.range('B2').value)
+    get_caller_df.pol = sheet.range('D2').value
     return df
 
 def get_mock_caller(excel_file: str):

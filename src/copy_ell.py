@@ -55,21 +55,20 @@ def create_dataframe(path, pre_vgm_weights):
     df_cargo_detail.columns = map(str.upper, df_cargo_detail.columns)
     df_manifest.columns = map(str.upper, df_manifest.columns)
 
-    df_cargo_detail = df_cargo_detail[['POD', 'POD TERMINAL','BOOKING REFERENCE', 'MLO PO', 'MLO', 'MOTHER VESSEL', 'MOTHER VOYAGE',
+    df_cargo_detail = df_cargo_detail[['POD', 'POD TERMINAL','BOOKING REFERENCE', 'MLO PO', 'MLO', 'MOTHER VESSEL', 'MOTHER AGEAGE',
     'F.DESTINATION','CARGO TYPE', 'COMMODITY', 'CONTAINER NO', 'WEIGHT IN MT', 'TEMPMAX', 'IMCO', 'UN', 'VGM WEIGHT IN MT']]
 
     df_manifest = df_manifest[['GOODS DESC', 'NO OF PACKAGES', 'NET WEIGHT IN KILOS']]
 
-    df_final = pd.DataFrame(columns=['BOOKING NO', 'MLO', 'PORT', 'TERMINAL', 'SLOT ACC', 'CONTAINER NO.', 'ISO TYPE',
-    'NET WEIGHT', 'POD STATUS', 'LOAD STATUS', 'VGM', 'OOG', 'IMDG', 'UNNR', 'MRN / REMARKS', 'CHEMICAL', 'TEMP',
-    'PO NUMBER', 'CUSTOMS STATUS', 'NO. OF PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOY', 'ETA', 'FINAL DEST'])
+    df_final = pd.DataFrame(columns=['BOOKING NUMBER', 'MLO', 'POL', 'TOL', 'CONTAINER', 'ISO TYPE',
+    'NET WEIGHT', 'POD STATUS', 'LOAD STATUS', 'VGM', 'OOG', 'REMARK', 'IMDG', 'UNNR', 'CHEM REF', 'MRN', 'TEMP',
+    'PO NUMBER', 'CUSTOMS STATUS', 'PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOYAGE', 'ETA', 'FINAL POD'])
 
-    df_final['BOOKING NO'] = df_cargo_detail['BOOKING REFERENCE']
+    df_final['BOOKING NUMBER'] = df_cargo_detail['BOOKING REFERENCE']
     df_final['MLO'] = df_cargo_detail['MLO']
-    df_final['PORT'] = df_cargo_detail['POD']
-    df_final['TERMINAL'] = df_cargo_detail['POD TERMINAL']
-    df_final['SLOT ACC'] = 'XCL'
-    df_final['CONTAINER NO.'] = df_cargo_detail['CONTAINER NO']
+    df_final['POL'] = df_cargo_detail['POD']
+    df_final['TOL'] = df_cargo_detail['POD TERMINAL']
+    df_final['CONTAINER'] = df_cargo_detail['CONTAINER NO']
     df_final['ISO TYPE'] = df_cargo_detail['CARGO TYPE']
     
     if pre_vgm_weights == "yes":
@@ -79,22 +78,23 @@ def create_dataframe(path, pre_vgm_weights):
         df_final['NET WEIGHT'] = df_manifest['NET WEIGHT IN KILOS']
         df_final['VGM'] = df_cargo_detail[['WEIGHT IN MT', 'VGM WEIGHT IN MT']].max(axis=1) * 1000
 
-    df_final['POD STATUS'] = "T"
-    df_final['LOAD STATUS'] = df_cargo_detail['COMMODITY']
-    df_final['OOG'] = ''
-    df_final['IMDG'] = df_cargo_detail['IMCO']
-    df_final['UNNR'] = df_cargo_detail['UN']
-    df_final['MRN / REMARKS'] = ''
-    df_final['CHEMICAL'] = ''
-    df_final['TEMP'] = df_cargo_detail['TEMPMAX']
-    df_final['PO NUMBER'] = df_cargo_detail['MLO PO']
-    df_final['CUSTOMS STATUS'] = ''
-    df_final['NO. OF PACKAGES'] = ''
-    df_final['GOODS DESCRIPTION'] = df_manifest['GOODS DESC']
-    df_final['OCEAN VESSEL'] = df_cargo_detail['MOTHER VESSEL']
-    df_final['ETA'] = ''
-    df_final['VOY'] = df_cargo_detail['MOTHER VOYAGE']
-    df_final['FINAL DEST'] = df_cargo_detail['F.DESTINATION']
+    df_final[:, 'POD STATUS'] = "T"
+    df_final[:, 'LOAD STATUS'] = df_cargo_detail['COMMODITY']
+    df_final[:, 'OOG'] = ""
+    df_final[:, 'REMARK'] = ""
+    df_final[:, 'IMDG'] = df_cargo_detail['IMCO']
+    df_final[:, 'UNNR'] = df_cargo_detail['UN']
+    df_final[:, 'CHEM REF'] = ""
+    df_final[:, 'MRN'] = ""
+    df_final[:, 'TEMP'] = df_cargo_detail['TEMPMAX']
+    df_final[:, 'PO NUMBER'] = df_cargo_detail['MLO PO']
+    df_final[:, 'CUSTOMS STATUS'] = ""
+    df_final[:, 'PACKAGES'] = ""
+    df_final[:, 'GOODS DESCRIPTION'] = df_manifest['GOODS DESC']
+    df_final[:, 'OCEAN VESSEL'] = df_cargo_detail['MOTHER VESSEL']
+    df_final[:, 'ETA'] = ""
+    df_final[:, 'VOYAGE'] = df_cargo_detail['MOTHER AGEAGE']
+    df_final[:, 'FINAL POD'] = df_cargo_detail['F.DESTINATION']
     if df_final['PORT'].iloc[-1] == 'END':
         df_final = df_final[:-1]
     return df_final
