@@ -8,7 +8,7 @@ def main():
     collecting_data()
 
 def collecting_data():
-    df = fn.get_caller_df()()
+    df = fn.get_caller_df()
     df.dropna(subset=['TEMP'], inplace=True)
 
     df_rlb = pd.DataFrame(columns=[
@@ -28,9 +28,9 @@ def collecting_data():
 
 def finish(df: pd.DataFrame):
 
-    vessel = fn.get_caller_df().vessel
-    voyage = fn.get_caller_df().voyage
-    pol = fn.get_caller_df().pol
+    vessel = fn.get_caller_df.vessel
+    voyage = fn.get_caller_df.voyage
+    pol = fn.get_caller_df.pol
     len_df = len(df) - 1
 
     wb_caller_path = xw.Book.caller().fullname
@@ -42,7 +42,7 @@ def finish(df: pd.DataFrame):
     pdf_name = os.path.join(folder_path_bokningsblad, rlb_file_name_pdf)
 
     with xw.App(visible=False) as app:
-            wb = app.books.open(fn.get_path()('tpl_rlb'))
+            wb = app.books.open(fn.get_path('tpl_rlb'))
             wb.save(name_of_file_and_path)
 
             dcm_sheet = wb.sheets['RLB']

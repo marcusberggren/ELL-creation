@@ -18,7 +18,7 @@ def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
     
     with xw.App(visible=False) as app:
-        wb = app.books.open(fn.get_path()('tpl_ell'))
+        wb = app.books.open(fn.get_path('tpl_ell'))
         cargo_detail_sheet = wb.sheets['Cargo Detail']
         manifest_sheet = wb.sheets['Manifest']
         cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
@@ -33,17 +33,17 @@ def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage
 def work_with_df(df: pd.DataFrame):
         
     #Skapar 4 olika data frames från CSV-filer
-    df_cargo_type = fn.get_csv_data()('cargo_type').copy()
-    df_country = fn.get_csv_data()('country').copy()
-    df_mlo = fn.get_csv_data()('mlo').copy()
-    df_ocean_vessel = fn.get_csv_data()('ocean_vessel').copy()
+    df_cargo_type = fn.get_csv_data('cargo_type').copy()
+    df_country = fn.get_csv_data('country').copy()
+    df_mlo = fn.get_csv_data('mlo').copy()
+    df_ocean_vessel = fn.get_csv_data('ocean_vessel').copy()
 
     # Regex som byter ut white spaces i början och slutet på varje instans i dataframe
-    df = fn.regex_no_extra_whitespace()(df).copy()
-    df_cargo_type = fn.regex_no_extra_whitespace()(df_cargo_type).copy()
-    df_country = fn.regex_no_extra_whitespace()(df_country).copy()
-    df_mlo = fn.regex_no_extra_whitespace()(df_mlo).copy()
-    df_ocean_vessel = fn.regex_no_extra_whitespace()(df_ocean_vessel).copy()
+    df = fn.regex_no_extra_whitespace(df).copy()
+    df_cargo_type = fn.regex_no_extra_whitespace(df_cargo_type).copy()
+    df_country = fn.regex_no_extra_whitespace(df_country).copy()
+    df_mlo = fn.regex_no_extra_whitespace(df_mlo).copy()
+    df_ocean_vessel = fn.regex_no_extra_whitespace(df_ocean_vessel).copy()
 
     # Sätter ihop ISO TYPE och LOAD STATUS
     df.loc[:, 'ISO TYPE'] = df['ISO TYPE'].astype(str)
