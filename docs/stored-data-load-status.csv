@@ -1,0 +1,9 @@
+﻿LOAD STATUS;TEXT
+LA;Laden
+MT;Empty
+DG;Dangerous
+RF;Reefer
+OT;Open top
+OG;Out of gauge (OOG)
+MT DG;Empty Dangerous
+OG DG;Out of gauge (OOG) Dangerous

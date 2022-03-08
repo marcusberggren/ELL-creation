@@ -14,7 +14,7 @@ def main():
 def set_variables():
     wb_caller = xw.Book.caller()
     folder_path = os.path.split(wb_caller.fullname)[0]
-    caller_sheet = wb_caller.sheets['Info']
+    caller_sheet = wb_caller.sheets['INFO']
 
     return folder_path, caller_sheet
 
