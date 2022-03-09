@@ -82,7 +82,7 @@ def container_check(container_no: str):
             return False
 
 def terminal_check(df: pd.DataFrame):
-    df_csv = get_csv_data('terminal')
+    df_csv = get_csv_data('terminal').copy()
 
     df_csv['CONCAT'] = df_csv['PORT'] + df_csv['TERMINAL']
     df['CONCAT'] = df['POL'] + df['TOL']
@@ -92,13 +92,13 @@ def terminal_check(df: pd.DataFrame):
     return df['TERMINAL_CHECK']
 
 def MLO_check(df: pd.DataFrame):
-    df_csv = get_csv_data('mlo')
+    df_csv = get_csv_data('mlo').copy()
     df.loc[df['MLO'].isin(df_csv['MLO']), 'MLO_CHECK'] = True
     df.loc[np.logical_not(df['MLO'].isin(df_csv['MLO'])), 'MLO_CHECK'] = False
     return df['MLO_CHECK']
 
 def cargo_type_check(df: pd.DataFrame):
-    df_csv = get_csv_data('cargo_type')
+    df_csv = get_csv_data('cargo_type').copy()
     df['ISO TYPE'] = df['ISO TYPE'].astype(str)
 
     df['CONCAT'] = df['ISO TYPE'] +  df['LOAD STATUS']
@@ -107,7 +107,7 @@ def cargo_type_check(df: pd.DataFrame):
     return df['CARGO_TYPE_CHECK']
 
 def load_status_check(df: pd.DataFrame):
-    df_csv = get_csv_data('load_status')
+    df_csv = get_csv_data('load_status').copy()
     df.loc[df['LOAD STATUS'].isin(df_csv['LOAD STATUS']), 'LOAD_STATUS_CHECK'] = True
     df.loc[np.logical_not(df['LOAD STATUS'].isin(df_csv['LOAD STATUS'])), 'LOAD_STATUS_CHECK'] = False
     df.loc[df['LOAD STATUS'].str.contains("MT"), 'LOAD_STATUS_CHECK'] = "MT"
@@ -123,21 +123,49 @@ def reefer_check(df: pd.DataFrame):
     df.loc[(df['ISO TYPE'].str.contains("R1")) & (df['TEMP'].notnull()), 'TEMP_CHECK'] = True
     return df['TEMP_CHECK']
 
-def customs_status_check(df: pd.DataFrame):
+def dg_check(df: pd.DataFrame):
+    df.loc[:, 'DG_CHECK'] = True
+    df.loc[(df['LOAD STATUS'].str.contains('DG')) & (df['IMDG'].isnull()), 'DG_CHECK'] = False
+    df.loc[(df['LOAD STATUS'].str.contains('DG')) & (df['UNNR'].isnull()), 'DG_CHECK'] = False
+    df.loc[(np.logical_not(df['LOAD STATUS'].str.contains('DG'))) & (df['IMDG'].notnull()), 'DG_CHECK'] = False
+    df.loc[(np.logical_not(df['LOAD STATUS'].str.contains('DG'))) & (df['UNNR'].notnull()), 'DG_CHECK'] = False
+    df.loc[(df['IMDG'].notnull()) & (df['UNNR'].isnull()), 'DG_CHECK'] = False
+    df.loc[(np.logical_not(df['IMDG'].notnull())) & (df['UNNR'].notnull()), 'DG_CHECK'] = False
+    df.loc[df['LOAD STATUS'].str.contains('DG') & (df['IMDG'].notnull()) & (df['UNNR'].notnull()), 'DG_CHECK'] = True
+    return df['DG_CHECK']
+
+def fpod_check(df: pd.DataFrame):
+    df_csv = get_csv_data('ports').copy()
+    df.loc[df['FINAL POD'].isin(df_csv['CODE']), 'FPOD_CHECK'] = True
+    df.loc[np.logical_not(df['FINAL POD'].isin(df_csv['CODE'])), 'FPOD_CHECK'] = False
+    return df['FPOD_CHECK']
+
+def vessel_check(df: pd.DataFrame):
+    df_csv = get_csv_data('ocean_vessel').copy()
+    df.loc[df['OCEAN VESSEL'].isin(df_csv['OCEAN VESSEL']), 'VESSEL_CHECK'] = True
+    df.loc[np.logical_not(df['OCEAN VESSEL'].isin(df_csv['OCEAN VESSEL'])), 'VESSEL_CHECK'] = False
+    return df['VESSEL_CHECK']
+
+def customs_check(df: pd.DataFrame):
     df_csv = get_csv_data('eu')
 
-    #Empty and if EU country
-    df.loc[df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']), 'CUSTOMS_CHECK'] = "C"
-    df.loc[df['LOAD STATUS'].str.contains("MT"), 'CUSTOMS_CHECK'] = "C"
-
     #NLRTM
-    df.loc[(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES'])) & (df['POL'] == "NLRTM"), 'CUSTOMS_CHECK'] = "X"
+    df.loc[(df['FINAL POD'].str[:2].isin(df_csv['EU COUNTRIES'])) & (df['POL'] == "NLRTM"), 'CUSTOMS_CHECK'] = "X"
     df.loc[(np.logical_not(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']))) & (df['POL'] == "NLRTM"), 'CUSTOMS_CHECK'] = "N"
+
+    #BEANR
+    df.loc[(np.logical_not(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']))) & (df['POL'] == "BEANR"), 'CUSTOMS_CHECK'] = "N"
 
     #DEHAM or DEBRV
     df.loc[(np.logical_not(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']))) & (df['POL'] == "DEHAM"), 'CUSTOMS_CHECK'] = "T1"
     df.loc[(np.logical_not(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']))) & (df['POL'] == "DEBRV"), 'CUSTOMS_CHECK'] = "T1"
+
+    #Empty and if EU country
+    df.loc[df['FINAL POD'].str[:2].isin(df_csv['EU COUNTRIES']), 'CUSTOMS_CHECK'] = "C"
+    df.loc[df['LOAD STATUS'].str.contains("MT"), 'CUSTOMS_CHECK'] = "C"
     return df['CUSTOMS_CHECK']
+
+
 
 def get_max_weight(df: pd.DataFrame):
     df['VGM'] = df['VGM'].fillna(0)

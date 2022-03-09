@@ -9,6 +9,7 @@ mlo;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-mlo.csv
 ocean_vessel;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-ocean-vessel.csv
 ports;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-ports.csv
 tpl_cargo_type;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-cargo-type.csv
+tpl_ports;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-ports.csv
 tpl_terminal;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-terminal.csv
 tpl_vessels;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-template-vessels.csv
 terminal;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-terminal.csv

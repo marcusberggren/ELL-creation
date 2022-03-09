@@ -7,6 +7,7 @@ info_sheet = wb.sheets['INFO']
 data_sheet = wb.sheets['DATA']
 data_table = info_sheet.range('A4').expand()
 df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
+df = pd.DataFrame(df).copy()
 
 def main():
     update_info_sheet()
@@ -23,26 +24,28 @@ def update_data_sheet():
     data_df.loc[:, 'container_check'] = df['CONTAINER'].apply(fn.container_check, 1)
     data_df.loc[:, 'load_status_check'] = fn.load_status_check(df)
     data_df.loc[:, 'reefer_check'] = fn.reefer_check(df)
-    data_df.loc[:, 'dg_check'] = "TBA"
-    data_df.loc[:, 'port_check'] = "TBA"
-    data_df.loc[:, 'vessel_check'] = "TBA"
-    data_df.loc[:, 'customs_check'] = "TBA"
+    data_df.loc[:, 'dg_check'] = fn.dg_check(df)
+    data_df.loc[:, 'fpod_check'] = fn.fpod_check(df)
+    data_df.loc[:, 'vessel_check'] = fn.vessel_check(df)
+    data_df.loc[:, 'customs_check'] = fn.customs_check(df)
     data_df.loc[:, 'get_max_weight'] = fn.get_max_weight(df)
     data_df.loc[:, 'get_TEUs'] = fn.get_TEUs(df)
 
-    data_sheet.range('A5').options(pd.DataFrame, index=False, header=False).value = data_df
+    data_sheet.range('A4').options(pd.DataFrame, index=False, header=True).value = data_df
 
 def update_info_sheet():
 
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
     cargo_type = ['tpl_cargo_type', 'TYPE OUTPUT', 'ISO TYPE']
     vessel = ['tpl_vessels', 'HL VESSEL OUTPUT', 'OCEAN VESSEL']
+    fpod = ['tpl_ports', 'UNLOCODE', 'FINAL POD']
 
     df.loc[:, 'TOL'] = fn.get_template_type(df, terminal)
     df.loc[:, 'ISO TYPE'] = fn.get_template_type(df, cargo_type)
     df.loc[:, 'OCEAN VESSEL'] = fn.get_template_type(df, vessel)
-    df.loc[df['FINAL POD'] == "ZAZBA", 'FINAL POD'] = "ZADUR"
+    df.loc[:, 'FINAL POD'] = fn.get_template_type(df, fpod)
 
     info_sheet.range('D5').options(pd.Series, index=False, header=False).value = df['TOL']
     info_sheet.range('F5').options(pd.Series, index=False, header=False).value = df['ISO TYPE']
+    info_sheet.range('V5').options(pd.Series, index=False, header=False).value = df['OCEAN VESSEL']
     info_sheet.range('Y5').options(pd.Series, index=False, header=False).value = df['FINAL POD']
