@@ -3,7 +3,42 @@ import xlwings as xw
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from datetime import datetime
+import os
 import re
+
+# VARIOUS
+
+def regex_no_extra_whitespace(df: pd.DataFrame):
+    df = df.replace(r"^\s+|\s+$", "", regex=True).copy()
+    return df
+
+def save_to_ell(name: str, df1: pd.DataFrame, df2: pd.DataFrame):
+    vessel = get_caller_df.vessel
+    voyage = get_caller_df.voyage
+    leg = get_caller_df.leg
+    pol = get_caller_df.pol
+
+    wb_caller_path = xw.Book.caller().fullname
+    folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
+    time_str = datetime.now().strftime("%y%m%d")
+    ell_file_name = name + vessel + "_" + str(voyage[:5]) + "_" + pol + "_" + time_str + ".xlsx"
+    name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
+    
+    with xw.App(visible=False) as app:
+        wb = app.books.open(get_path('tpl_ell'))
+        cargo_detail_sheet = wb.sheets['Cargo Detail']
+        manifest_sheet = wb.sheets['Manifest']
+        cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
+        cargo_detail_sheet.range('A2').value = vessel
+        cargo_detail_sheet.range('B2').value = voyage
+        cargo_detail_sheet.range('C2').value = leg
+        cargo_detail_sheet.range('F2').value = pol
+        manifest_sheet.range('A2').options(pd.DataFrame, index=False, header=False).value = df2.copy()
+        wb.save(name_of_file_and_path)
+        wb.close()
+
+# GET
 
 def get_path(text_input: str):
     home = str(Path.home())
@@ -30,18 +65,66 @@ def get_caller_df():
     
     get_caller_df.vessel = sheet.range('A2').value
     get_caller_df.voyage = str(sheet.range('B2').value)
+    get_caller_df.leg = sheet.range('C2')
     get_caller_df.pol = sheet.range('D2').value
     return df
 
-def get_mock_caller(excel_file: str):
+def get_mock_caller(excel_file_name: str):
     func_path = get_path.__code__.co_filename
     trimmed_path = re.sub(r"\w+\\\w+\.py$", "", func_path)    #Tar bort sista två orden + .py i path
-    file_path = trimmed_path + 'data\\' + excel_file
+    file_path = trimmed_path + 'data\\' + excel_file_name
     return file_path
 
-def regex_no_extra_whitespace(df: pd.DataFrame):
-    df = df.replace(r"^\s+|\s+$", "", regex=True).copy()
+def get_max_weight(df: pd.DataFrame):
+    df['VGM'] = df['VGM'].fillna(0)
+    df.loc[(df['NET WEIGHT'] >= 100) & (df['VGM'] == 0), 'WEIGHT+TARE'] = df[['NET WEIGHT', 'TARE']].sum(axis=1)
+    df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'WEIGHT+TARE'] = df['NET WEIGHT'] * 1000
+    df.loc[df['VGM'] > 0, 'WEIGHT+TARE'] = df[['NET WEIGHT', 'VGM']].max(axis=1)
+    return df['WEIGHT+TARE']
+
+def get_TEUs(df: pd.DataFrame):
+    conditions_teu = [
+            (df['ISO TYPE'].str[:1] == "2"),
+            (df['ISO TYPE'].str[:1] == "3"),
+            (df['ISO TYPE'].str[:1] == "4"),
+            (df['ISO TYPE'].str[:1] == "L")
+        ]
+    values_teu = [1, 2, 2, 2]
+    result = np.select(conditions_teu, values_teu)
+    return result
+
+def get_tare(df: pd.DataFrame):
+    conditions_tare = [
+            (df['ISO TYPE'].str[:1] == "2"),
+            (df['ISO TYPE'].str[:1] == "3"),
+            (df['ISO TYPE'].str[:1] == "4"),
+            (df['ISO TYPE'].str[:1] == "L")
+        ]
+    values_tare = [2200, 3200, 4000, 4000]
+    result = np.select(conditions_tare, values_tare)
+    return result
+
+def get_template_type(df: pd.DataFrame, template: list):
+    file_path = get_path(template[0])
+    df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
+    new_dict = df_csv.to_dict()[template[1]]
+    df = df[template[2]].replace(new_dict).copy()
     return df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#CHECK
 
 def container_check(container_no: str):
     var_dict = {
@@ -52,8 +135,12 @@ def container_check(container_no: str):
         }
 
     value_multiply, summa, = 0, 0
-    len_cont = len(container_no)
 
+    if container_no == None:
+        return True
+    else:
+        len_cont = len(container_no)
+    
     if container_no[:3] == "DUM":
         return False
     elif len_cont != 11:
@@ -148,7 +235,6 @@ def vessel_check(df: pd.DataFrame):
 
 def customs_check(df: pd.DataFrame):
     df_csv = get_csv_data('eu')
-
     
     df.loc[(df['FINAL POD'].str[:2].isin(df_csv['EU COUNTRIES'])) & (df['POL'] == "NLRTM"), 'CUSTOMS_CHECK'] = "X"                  #NLRTM
     df.loc[(np.logical_not(df['CUSTOMS STATUS'].isin(df_csv['EU COUNTRIES']))) & (df['POL'] == "NLRTM"), 'CUSTOMS_CHECK'] = "N"     #NLRTM
@@ -158,40 +244,3 @@ def customs_check(df: pd.DataFrame):
     df.loc[df['FINAL POD'].str[:2].isin(df_csv['EU COUNTRIES']), 'CUSTOMS_CHECK'] = "C"                                             #EU country
     df.loc[df['LOAD STATUS'].str.contains("MT"), 'CUSTOMS_CHECK'] = "C"                                                             #Empty
     return df['CUSTOMS_CHECK']
-
-
-def get_max_weight(df: pd.DataFrame):
-    df['VGM'] = df['VGM'].fillna(0)
-    df.loc[(df['NET WEIGHT'] >= 100) & (df['VGM'] == 0), 'WEIGHT+TARE'] = df[['NET WEIGHT', 'TARE']].sum(axis=1)
-    df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'WEIGHT+TARE'] = df['NET WEIGHT'] * 1000
-    df.loc[df['VGM'] > 0, 'WEIGHT+TARE'] = df[['NET WEIGHT', 'VGM']].max(axis=1)
-    return df['WEIGHT+TARE']
-
-def get_TEUs(df: pd.DataFrame):
-    conditions_teu = [
-            (df['ISO TYPE'].str[:1] == "2"),
-            (df['ISO TYPE'].str[:1] == "3"),
-            (df['ISO TYPE'].str[:1] == "4"),
-            (df['ISO TYPE'].str[:1] == "L")
-        ]
-    values_teu = [1, 2, 2, 2]
-    result = np.select(conditions_teu, values_teu)
-    return result
-
-def get_tare(df: pd.DataFrame):
-    conditions_tare = [
-            (df['ISO TYPE'].str[:1] == "2"),
-            (df['ISO TYPE'].str[:1] == "3"),
-            (df['ISO TYPE'].str[:1] == "4"),
-            (df['ISO TYPE'].str[:1] == "L")
-        ]
-    values_tare = [2200, 3200, 4000, 4000]
-    result = np.select(conditions_tare, values_tare)
-    return result
-
-def get_template_type(df: pd.DataFrame, template: list):
-    file_path = get_path(template[0])
-    df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
-    new_dict = df_csv.to_dict()[template[1]]
-    df = df[template[2]].replace(new_dict).copy()
-    return df

@@ -18,9 +18,9 @@ def pre_export():
 
     wb_caller_path = xw.Book.caller().fullname
     folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
-    file_name = "PRE_ELL_" + vessel + "_" + str(voyage[:5]) + "_" + pol + "_"   #utelämna slutet för att kompletteras i loop nedan
+    file_name = "PRE_EXPORT_" + vessel + "_" + str(voyage[:5]) + "_" + pol + "_"   #utelämna slutet för att kompletteras i loop nedan
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, file_name)
-    
+
 
     for name, group in df_group:
         with xw.App(visible=False) as app:

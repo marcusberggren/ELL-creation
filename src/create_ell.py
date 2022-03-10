@@ -2,33 +2,10 @@ import xlwings as xw
 import pandas as pd
 import functions as fn
 import numpy as np
-from datetime import datetime
-import os
 
 
 def main():
-    create_ell()
-
-def copy_sheets_to_workbook(df1: pd.DataFrame, df2: pd.DataFrame, vessel, voyage, leg, pol):
-
-    wb_caller_path = xw.Book.caller().fullname
-    folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
-    time_str = datetime.now().strftime("%y%m%d")
-    ell_file_name = "ELL_" + vessel + "_" + str(voyage[:5]) + "_" + pol + "_" + time_str + ".xlsx"
-    name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
-    
-    with xw.App(visible=False) as app:
-        wb = app.books.open(fn.get_path('tpl_ell'))
-        cargo_detail_sheet = wb.sheets['Cargo Detail']
-        manifest_sheet = wb.sheets['Manifest']
-        cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
-        cargo_detail_sheet.range('A2').value = vessel
-        cargo_detail_sheet.range('B2').value = voyage
-        cargo_detail_sheet.range('C2').value = leg
-        cargo_detail_sheet.range('F2').value = pol
-        manifest_sheet.range('A2').options(pd.DataFrame, index=False, header=False).value = df2.copy()
-        wb.save(name_of_file_and_path)
-        wb.close()    
+    create_ell()  
 
 def work_with_df(df: pd.DataFrame):
         
@@ -87,7 +64,7 @@ def work_with_df(df: pd.DataFrame):
     df = df.merge(df_mlo, on='MLO', how='left').copy()
 
     # Viktigt att denna ändring görs för merge #2
-    df.loc[:, 'PORT'] = create_ell.pol[:2]
+    df.loc[:, 'PORT'] = fn.get_caller_df.pol[:2]
 
     # Merge #2 lägger till suffixes när kolumnerna 'COUNTRY' krockar
     df = df.merge(df_country, on='PORT', how='left', suffixes=('_CONSIGNEE','_SHIPPER')).copy()
@@ -133,8 +110,8 @@ def cargo_detail(df: pd.DataFrame):
     df_cd.loc[:, 'Pod call seq'] = 1
     df_cd.loc[:, 'Pod terminal'] = df['TOL']
     df_cd.loc[:, 'Pod Status'] = "T"
-    df_cd.loc[:, 'POL'] = create_ell.pol
-    df_cd.loc[:, 'Pol terminal'] = create_ell.pol
+    df_cd.loc[:, 'POL'] = fn.get_caller_df.pol
+    df_cd.loc[:, 'Pol terminal'] = fn.get_caller_df.pol
     df_cd.loc[:, 'Pol Status'] = "L"
     df_cd.loc[:, 'Slot Owner'] = "XCL"
     df_cd.loc[:, 'Slot Account'] = "XCL"
@@ -191,19 +168,11 @@ def manifest(df: pd.DataFrame):
     return df_man
 
 def create_ell():
-    wb = xw.Book.caller()
-    sheet = wb.sheets('INFO')
-    data_table = sheet.range('A4').expand()
-    df = sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
-
-    vessel = sheet.range('A2').value
-    voyage = str(sheet.range('B2').value)
-    leg = sheet.range('C2').value
-    pol = sheet.range('D2').value
-    create_ell.pol = pol
-
+    name = "ELL_"
+    df = fn.get_caller_df().copy()
     df = work_with_df(df).copy()
-    return copy_sheets_to_workbook(cargo_detail(df), manifest(df), vessel, voyage, leg, pol)
+
+    return fn.save_to_ell(name, cargo_detail(df), manifest(df))
 
 
 if __name__ == '__main__':
