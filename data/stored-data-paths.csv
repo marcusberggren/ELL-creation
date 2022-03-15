@@ -2,6 +2,7 @@
 cargo_type;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-cargo-type.csv
 country;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-country.csv
 ems;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-ems.csv
+ever_partner_code;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-ever-partner-code.csv
 eu;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-eu.csv
 imdg;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-imdg.csv
 load_status;\BOLLORE\XPF - Documents\MAINTENANCE\templates\stored-data-load-status.csv

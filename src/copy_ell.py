@@ -3,6 +3,7 @@ import xlwings as xw
 import os as os
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import functions as fn
 
 def main():
     caller_wb, caller_sheet = set_variables()
@@ -105,5 +106,6 @@ def copy_data(dataframe, data_to_sheet, row_number):
     return
 
 if __name__ == '__main__':
-    xw.Book(r'\\STLSBS01\USER_FOLDERS\maber.STL\Desktop\0105_Bokningsblad_TEST.xlsb').set_mock_caller()
+    file_path = fn.get_mock_caller('0109_Bokningsblad.xlsb')
+    xw.Book(file_path).set_mock_caller()
     main()

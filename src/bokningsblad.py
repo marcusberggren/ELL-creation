@@ -20,14 +20,16 @@ def update_data_sheet():
     df.loc[:, 'TARE'] = fn.get_tare(df)
     data_df.loc[:, 'MLO_check'] = fn.MLO_check(df)
     data_df.loc[:, 'terminal_check'] = fn.terminal_check(df)
-    data_df.loc[:, 'cargo_type_check'] = fn.cargo_type_check(df)
     data_df.loc[:, 'container_check'] = df['CONTAINER'].apply(fn.container_check, 1)
+    data_df.loc[:, 'cargo_type_check'] = fn.cargo_type_check(df)
     data_df.loc[:, 'load_status_check'] = fn.load_status_check(df)
-    data_df.loc[:, 'reefer_check'] = fn.reefer_check(df)
+    data_df.loc[:, 'oog_check'] = fn.oog_check(df)
     data_df.loc[:, 'dg_check'] = fn.dg_check(df)
-    data_df.loc[:, 'fpod_check'] = fn.fpod_check(df)
-    data_df.loc[:, 'vessel_check'] = fn.vessel_check(df)
+    data_df.loc[:, 'reefer_check'] = fn.reefer_check(df)
+    data_df.loc[:, 'po_number_check'] = fn.po_number_check(df)
     data_df.loc[:, 'customs_check'] = fn.customs_check(df)
+    data_df.loc[:, 'vessel_check'] = fn.vessel_check(df)
+    data_df.loc[:, 'fpod_check'] = fn.fpod_check(df)
     data_df.loc[:, 'get_max_weight'] = fn.get_max_weight(df)
     data_df.loc[:, 'get_TEUs'] = fn.get_TEUs(df)
 
@@ -35,6 +37,7 @@ def update_data_sheet():
 
 def update_info_sheet():
 
+    mlo = ['ever_partner_code', 'EVER MLO', 'MLO']
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
     cargo_type = ['tpl_cargo_type', 'TYPE OUTPUT', 'ISO TYPE']
     vessel = ['tpl_vessels', 'HL VESSEL OUTPUT', 'OCEAN VESSEL']
@@ -44,7 +47,9 @@ def update_info_sheet():
     df.loc[:, 'ISO TYPE'] = fn.get_template_type(df, cargo_type)
     df.loc[:, 'OCEAN VESSEL'] = fn.get_template_type(df, vessel)
     df.loc[:, 'FINAL POD'] = fn.get_template_type(df, fpod)
+    df.loc[:, 'MLO'] = fn.get_template_type(df, mlo)
 
+    info_sheet.range('B5').options(pd.Series, index=False, header=False).value = df['MLO']
     info_sheet.range('D5').options(pd.Series, index=False, header=False).value = df['TOL']
     info_sheet.range('F5').options(pd.Series, index=False, header=False).value = df['ISO TYPE']
     info_sheet.range('V5').options(pd.Series, index=False, header=False).value = df['OCEAN VESSEL']
