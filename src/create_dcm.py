@@ -58,7 +58,7 @@ def finish(df: pd.DataFrame):
     wb_caller_path = xw.Book.caller().fullname
     folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
     time_str = datetime.now().strftime("%y%m%d")
-    dgm_file_name = "DG_" + vessel + "_" + str(voyage[:5]) + "_" + pol + "_" + time_str + ".xlsx"
+    dgm_file_name = "DG_" + vessel + "_" + str(voyage) + "_" + pol + "_" + time_str + ".xlsx"
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, dgm_file_name)
 
     with xw.App(visible=False) as app:
@@ -70,7 +70,7 @@ def finish(df: pd.DataFrame):
         dcm_sheet.range('F11').value = voyage
         dcm_sheet.range('I11').value = pol
         dcm_sheet.range('F18').value = today
-        dcm_sheet.range((14, 1), (13 + len_df, 19)).insert('down')
+        dcm_sheet.range((14, 1), (14 + len_df, 19)).insert('down')
         dcm_sheet.range('B14').options(pd.DataFrame, index=False, header=False).value = df.copy()
 
         wb.save(name_of_file_and_path)

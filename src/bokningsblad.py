@@ -2,19 +2,25 @@ import pandas as pd
 import xlwings as xw
 import functions as fn
 
-wb = xw.Book.caller()
-info_sheet = wb.sheets['INFO']
-data_sheet = wb.sheets['DATA']
-data_table = info_sheet.range('A4').expand()
-df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
-df = pd.DataFrame(df).copy()
+
 
 def main():
-    update_info_sheet()
-    update_data_sheet()
-    
-def update_data_sheet():
+    wb = xw.Book.caller()
+    info_sheet = wb.sheets['INFO']
+    data_sheet = wb.sheets['DATA']
 
+    data_table = info_sheet.range('A4').expand()
+    df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
+    df = pd.DataFrame(df).copy()
+    
+    if df.shape[0] == 0:
+        return
+    else:
+        update_info_sheet(df, info_sheet)
+        update_data_sheet(df, data_sheet)
+    
+def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
+    df = fn.regex_no_extra_whitespace(df)
     data_df = pd.DataFrame()
 
     df.loc[:, 'TARE'] = fn.get_tare(df)
@@ -35,7 +41,9 @@ def update_data_sheet():
 
     data_sheet.range('A4').options(pd.DataFrame, index=False, header=True).value = data_df
 
-def update_info_sheet():
+def update_info_sheet(df: pd.DataFrame, info_sheet: xw.sheets):
+
+    df = fn.regex_no_extra_whitespace(df)
 
     mlo = ['ever_partner_code', 'EVER MLO', 'MLO']
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
@@ -49,8 +57,4 @@ def update_info_sheet():
     df.loc[:, 'FINAL POD'] = fn.get_template_type(df, fpod)
     df.loc[:, 'MLO'] = fn.get_template_type(df, mlo)
 
-    info_sheet.range('B5').options(pd.Series, index=False, header=False).value = df['MLO']
-    info_sheet.range('D5').options(pd.Series, index=False, header=False).value = df['TOL']
-    info_sheet.range('F5').options(pd.Series, index=False, header=False).value = df['ISO TYPE']
-    info_sheet.range('V5').options(pd.Series, index=False, header=False).value = df['OCEAN VESSEL']
-    info_sheet.range('Y5').options(pd.Series, index=False, header=False).value = df['FINAL POD']
+    info_sheet.range('A5').options(pd.DataFrame, index=False, header=False).value = df.copy()

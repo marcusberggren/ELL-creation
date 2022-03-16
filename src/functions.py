@@ -10,7 +10,7 @@ import re
 # VARIOUS
 
 def regex_no_extra_whitespace(df: pd.DataFrame):
-    df = df.replace(r"^\s+|\s+$", "", regex=True).copy()
+    df = df.replace(r'^\s+|\s+$', '', regex=True)
     return df
 
 def save_to_ell(name: str, df1: pd.DataFrame, df2: pd.DataFrame):
@@ -22,7 +22,7 @@ def save_to_ell(name: str, df1: pd.DataFrame, df2: pd.DataFrame):
     wb_caller_path = xw.Book.caller().fullname
     folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
     time_str = datetime.now().strftime("%y%m%d")
-    ell_file_name = name + vessel + "_" + str(voyage[:5]) + "_" + pol + "_" + time_str + ".xlsx"
+    ell_file_name = name + vessel + "_" + str(voyage) + "_" + pol + "_" + time_str + ".xlsx"
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, ell_file_name)
     
     with xw.App(visible=False) as app:
@@ -62,10 +62,12 @@ def get_caller_df():
     data_table = sheet.range('A4').expand()
     df = sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
     df = regex_no_extra_whitespace(df).copy()
+    voyage = str(sheet.range('B2').value)
+
     
     get_caller_df.vessel = sheet.range('A2').value
-    get_caller_df.voyage = str(sheet.range('B2').value)
-    get_caller_df.leg = sheet.range('C2')
+    get_caller_df.voyage = re.search(r'^\d{0,5}', voyage).group(0)
+    get_caller_df.leg = sheet.range('C2').value
     get_caller_df.pol = sheet.range('D2').value
     return df
 
@@ -81,6 +83,10 @@ def get_max_weight(df: pd.DataFrame):
     df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'WEIGHT+TARE'] = df['NET WEIGHT'] * 1000
     df.loc[df['VGM'] > 0, 'WEIGHT+TARE'] = df[['NET WEIGHT', 'VGM']].max(axis=1)
     return df['WEIGHT+TARE']
+
+def get_net_weight(df: pd.DataFrame):
+    df.loc[(df['NET WEIGHT'] == 0) & (np.logical_not(df['LOAD STATUS'].str.contains("MT"))), 'NET WEIGHT'] = df['VGM'] - df['TARE']
+    return df['NET WEIGHT']
 
 def get_TEUs(df: pd.DataFrame):
     conditions_teu = [
@@ -109,7 +115,6 @@ def get_template_type(df: pd.DataFrame, template: list):
     df = regex_no_extra_whitespace(df)
     df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
     new_dict = df_csv.to_dict()[template[1]]
-    #df['ISO TYPE'] = df['ISO TYPE'].astype(str)
     df = df[template[2]].replace(new_dict).copy()
     return df
 
@@ -159,6 +164,8 @@ def container_check(container_no: str):
     
     if container_no[:3] == "DUM":
         return False
+    elif container_no[:3] == "TBN":
+        return False
     elif len_cont != 11:
         return False
     else:
@@ -202,10 +209,10 @@ def load_status_check(df: pd.DataFrame):
     df.loc[df['CONCAT'].isin(df_csv_ct['ISO STATUS']), 'LOAD_STATUS_CHECK'] = True
     df.loc[np.logical_not(df['CONCAT'].isin(df_csv_ct['ISO STATUS'])), 'LOAD_STATUS_CHECK'] = False
 
-    df.loc[(df['LOAD STATUS'].str.contains("RF")) & df['CONCAT'].isin(df_csv_ct['ISO STATUS']), 'LOAD_STATUS_CHECK'] = "SPECIAL"
-    df.loc[df['LOAD STATUS'].str.contains("MT") & df['CONCAT'].isin(df_csv_ct['ISO STATUS']), 'LOAD_STATUS_CHECK'] = "SPECIAL"
-    df.loc[df['LOAD STATUS'].str.contains("DG") & df['CONCAT'].isin(df_csv_ct['ISO STATUS']), 'LOAD_STATUS_CHECK'] = "SPECIAL"
-    df.loc[df['LOAD STATUS'].str.contains("OG") & df['CONCAT'].isin(df_csv_ct['ISO STATUS']), 'LOAD_STATUS_CHECK'] = "SPECIAL"
+    df.loc[(df['LOAD STATUS'].str.contains("RF")) & (df['CONCAT'].isin(df_csv_ct['ISO STATUS'])), 'LOAD_STATUS_CHECK'] = "SPECIAL"
+    df.loc[(df['LOAD STATUS'].str.contains("MT")) & (df['CONCAT'].isin(df_csv_ct['ISO STATUS'])), 'LOAD_STATUS_CHECK'] = "SPECIAL"
+    df.loc[(df['LOAD STATUS'].str.contains("DG")) & (df['CONCAT'].isin(df_csv_ct['ISO STATUS'])), 'LOAD_STATUS_CHECK'] = "SPECIAL"
+    df.loc[(df['LOAD STATUS'].str.contains("OG")) & (df['CONCAT'].isin(df_csv_ct['ISO STATUS'])), 'LOAD_STATUS_CHECK'] = "SPECIAL"
     
 
     return df['LOAD_STATUS_CHECK']
@@ -223,7 +230,7 @@ def dg_check(df: pd.DataFrame):
     df.loc[(np.logical_not(df['LOAD STATUS'].str.contains('DG'))) & (df['UNNR'].notnull()), 'DG_CHECK'] = False
     df.loc[(df['IMDG'].notnull()) & (df['UNNR'].isnull()), 'DG_CHECK'] = False
     df.loc[(np.logical_not(df['IMDG'].notnull())) & (df['UNNR'].notnull()), 'DG_CHECK'] = False
-    df.loc[df['LOAD STATUS'].str.contains('DG') & (df['IMDG'].notnull()) & (df['UNNR'].notnull()), 'DG_CHECK'] = True
+    df.loc[(df['LOAD STATUS'].str.contains('DG')) & (df['IMDG'].notnull()) & (df['UNNR'].notnull()), 'DG_CHECK'] = True
     return df['DG_CHECK']
 
 def reefer_check(df: pd.DataFrame):

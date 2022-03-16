@@ -111,7 +111,7 @@ def cargo_detail(df: pd.DataFrame):
     df_cd.loc[:, 'Pod terminal'] = df['TOL']
     df_cd.loc[:, 'Pod Status'] = "T"
     df_cd.loc[:, 'POL'] = fn.get_caller_df.pol
-    df_cd.loc[:, 'Pol terminal'] = fn.get_caller_df.pol
+    df_cd.loc[:, 'Pol terminal'] = fn.get_template_type(df_cd, ['terminal', 'TERMINAL', 'POL'])
     df_cd.loc[:, 'Pol Status'] = "L"
     df_cd.loc[:, 'Slot Owner'] = "XCL"
     df_cd.loc[:, 'Slot Account'] = "XCL"
@@ -128,6 +128,9 @@ def cargo_detail(df: pd.DataFrame):
     df_cd.loc[:, 'Commodity'] = df['LOAD STATUS']
     df_cd.loc[:, 'Container No'] = df['CONTAINER']
     df_cd.loc[:, 'Weight in MT'] = df['MAX WEIGHT']
+    df_cd.loc[:, 'TempMax'] = df['TEMP']
+    df_cd.loc[:, 'TempMin'] = df['TEMP']
+    df_cd.loc[:, 'TempOpt'] = df['TEMP']
     df_cd.loc[:, 'IMCO'] = df['IMDG']
     df_cd.loc[:, 'UN'] = df['UNNR']
     df_cd.loc[:, 'IMO Name'] = df['CHEM'] ## ADD?
@@ -157,7 +160,7 @@ def manifest(df: pd.DataFrame):
     df_man.loc[:, 'Cargo Status'] = df['CUSTOMS STATUS']
     df_man.loc[:, 'Transhipment'] = df['TRANSHIPMENT']
     df_man.loc[:, 'Tare Weight in Kilos'] = df['TARE']
-    df_man.loc[:, 'Net Weight in Kilos'] = df['NET WEIGHT']
+    df_man.loc[:, 'Net Weight in Kilos'] = fn.get_net_weight(df)
     df_man.loc[:, 'Deep Sea Vessel'] = df['OCEAN VESSEL']
     df_man.loc[:, 'ETA'] = df['ETA']
     df_man.loc[:, 'Shipper'] = df['SHIPPER'] + " " + df['COUNTRY_SHIPPER']

@@ -36,8 +36,8 @@ def finish(df: pd.DataFrame):
     wb_caller_path = xw.Book.caller().fullname
     folder_path_bokningsblad = os.path.split(wb_caller_path)[0]
     time_str = datetime.now().strftime("%y%m%d")
-    rlb_file_name = vessel + "_" + str(voyage[:5]) + "_" + pol + "_REEFER_LOG_BOOK_" + time_str + ".xlsx"
-    rlb_file_name_pdf = vessel + "_" + str(voyage[:5]) + "_" + pol + "_REEFER_LOG_BOOK_" + time_str
+    rlb_file_name = vessel + "_" + str(voyage) + "_" + pol + "_REEFER_LOG_BOOK_" + time_str + ".xlsx"
+    rlb_file_name_pdf = vessel + "_" + str(voyage) + "_" + pol + "_REEFER_LOG_BOOK_" + time_str
     name_of_file_and_path = os.path.join(folder_path_bokningsblad, rlb_file_name)
     pdf_name = os.path.join(folder_path_bokningsblad, rlb_file_name_pdf)
 
