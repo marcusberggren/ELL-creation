@@ -48,7 +48,7 @@ def work_with_df(df: pd.DataFrame):
     df.loc[:, 'PO NUMBER'] = np.where(df['PO NUMBER'].isnull(), df['BOOKING NUMBER'], df['PO NUMBER'])
 
     # Skapar ny kolumn med gods + MRN. Om MRN är noll (isnull) så läggs enbart gods till
-    df.loc[:, 'GOODS+MRN'] = np.where(df['MRN'].isnull(), df['GOODS DESCRIPTION'], df['GOODS DESCRIPTION'] + " " + df['MRN'])
+    df.loc[:, 'GOODS+MRN'] = np.where(df['MRN'].isnull(), df['GOODS DESCRIPTION'], df['GOODS DESCRIPTION'] + " " + str(df['MRN']))
 
     # Lägger till 'T6 CARGO TYPE' till df när ISO STATUS matchar
     df = df.merge(df_cargo_type, on='ISO STATUS', how='left').copy()

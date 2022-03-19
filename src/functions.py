@@ -63,12 +63,13 @@ def get_caller_df():
     df = sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
     df = regex_no_extra_whitespace(df).copy()
     voyage = str(sheet.range('B2').value)
+    df['MRN'] = df['MRN'].apply(str)
 
     
     get_caller_df.vessel = sheet.range('A2').value
     get_caller_df.voyage = re.search(r'^\d{0,5}', voyage).group(0)
-    get_caller_df.leg = sheet.range('C2').value
-    get_caller_df.pol = sheet.range('D2').value
+    get_caller_df.leg = sheet.range('D2').value
+    get_caller_df.pol = sheet.range('C2').value
     return df
 
 def get_mock_caller(excel_file_name: str):
@@ -154,42 +155,47 @@ def container_check(container_no: str):
         "O":26, "P":27, "Q":28, "R":29, "S":30, "T":31, "U":32,
         "V":34, "W":35, "X":36, "Y":37, "Z":38
         }
-
+    
     value_multiply, summa, = 0, 0
 
-    if container_no == None:
-        return True
-    else:
-        len_cont = len(container_no)
+    if re.search(r'^\w{4}\d{7}', container_no):
     
-    if container_no[:3] == "DUM":
-        return False
-    elif container_no[:3] == "TBN":
-        return False
-    elif len_cont != 11:
-        return False
-    else:
-        for num, character in enumerate(container_no):
-            if num == 0:
-                value_multiply = 1
-            elif num == 10:
-                continue
-            else:
-                value_multiply *= 2
-
-            if re.search('[a-zA-z]', character):
-                summa += int(var_dict.get(character)) * value_multiply
-            elif re.search('[0-9]', character):
-                summa += int(character) * value_multiply
-
-        sum_changed = int(summa/11) * 11
- 
-        if summa - sum_changed == 10 and int(container_no[len_cont-1]) == 0:
-            return True
-        elif summa - sum_changed == int(container_no[len_cont-1]):
+        if container_no == None:
             return True
         else:
+            len_cont = len(container_no)
+
+
+        if container_no[:3] == "DUM":
             return False
+        elif container_no[:3] == "TBN":
+            return False
+        elif len_cont != 11:
+            return False
+        else:
+            for num, character in enumerate(container_no):
+                if num == 0:
+                    value_multiply = 1
+                elif num == 10:
+                    continue
+                else:
+                    value_multiply *= 2
+
+                if re.search('[a-zA-z]', character):
+                    summa += int(var_dict.get(character)) * value_multiply
+                elif re.search('[0-9]', character):
+                    summa += int(character) * value_multiply
+
+            sum_changed = int(summa/11) * 11
+    
+            if summa - sum_changed == 10 and int(container_no[len_cont-1]) == 0:
+                return True
+            elif summa - sum_changed == int(container_no[len_cont-1]):
+                return True
+            else:
+                return False
+    else:
+        return False
 
 def cargo_type_check(df: pd.DataFrame):
     df_csv = get_csv_data('cargo_type').copy()

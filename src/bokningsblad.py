@@ -12,8 +12,10 @@ def main():
     data_table = info_sheet.range('A4').expand()
     df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
     df = pd.DataFrame(df).copy()
+    df['CONTAINER'] = df['CONTAINER'].apply(str)
     
     if df.shape[0] == 0:
+        #df_columns = pd.DataFrame(columns=['mlo_check', 'terminal_check', 'container_check', 'cargo_type_check', 'load_status_check'])
         return
     else:
         update_info_sheet(df, info_sheet)
@@ -23,8 +25,9 @@ def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
     df = fn.regex_no_extra_whitespace(df)
     data_df = pd.DataFrame()
 
+
     df.loc[:, 'TARE'] = fn.get_tare(df)
-    data_df.loc[:, 'MLO_check'] = fn.MLO_check(df)
+    data_df.loc[:, 'mlo_check'] = fn.MLO_check(df)
     data_df.loc[:, 'terminal_check'] = fn.terminal_check(df)
     data_df.loc[:, 'container_check'] = df['CONTAINER'].apply(fn.container_check, 1)
     data_df.loc[:, 'cargo_type_check'] = fn.cargo_type_check(df)
@@ -36,8 +39,14 @@ def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
     data_df.loc[:, 'customs_check'] = fn.customs_check(df)
     data_df.loc[:, 'vessel_check'] = fn.vessel_check(df)
     data_df.loc[:, 'fpod_check'] = fn.fpod_check(df)
-    data_df.loc[:, 'get_max_weight'] = fn.get_max_weight(df)
-    data_df.loc[:, 'get_TEUs'] = fn.get_TEUs(df)
+    data_df.loc[:, 'get_max_weight'] = fn.get_max_weight(df)/1000
+    data_df.loc[:, 'get_teus'] = fn.get_TEUs(df)
+    data_df.loc[:, 'mlo'] = df['MLO']
+    data_df.loc[:, 'tol'] = df['TOL']
+    data_df.loc[:, "20feet"] = 0
+    data_df.loc[:, "40feet"] = 0
+    data_df.loc[data_df['get_teus'] == 1, "20feet"] = 1
+    data_df.loc[data_df['get_teus'] == 2, "40feet"] = 1
 
     data_sheet.range('A4').options(pd.DataFrame, index=False, header=True).value = data_df
 
