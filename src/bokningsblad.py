@@ -6,23 +6,26 @@ import functions as fn
 
 
 def main():
-    wb = xw.Book.caller()
-    info_sheet = wb.sheets['INFO']
-    data_sheet = wb.sheets['DATA']
+    
+    def get_data():
+        wb = xw.Book.caller()
+        get_data.info_sheet = wb.sheets['INFO']
+        get_data.data_sheet = wb.sheets['DATA']
 
-    data_table = info_sheet.range('A4').expand()
-    df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
-    df = pd.DataFrame(df).copy()
+        data_table = get_data.info_sheet.range('A4').expand()
+        df = get_data.info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
+        df = pd.DataFrame(df).copy()
 
-    df['CONTAINER'] = df['CONTAINER'].apply(str).copy()     #formats column to string so fn.container_check works
-    df.loc[df['CONTAINER'] == 'None', 'CONTAINER'] = ''     #since column is string need to change 'None' to ''
+        df['CONTAINER'] = df['CONTAINER'].apply(str).copy()     #formats column to string so fn.container_check works
+        df.loc[df['CONTAINER'] == 'None', 'CONTAINER'] = ''     #since column is string need to change 'None' to ''
+        return df
 
-    if df.shape[0] == 0:
+    if get_data().shape[0] == 0:
         #df_columns = pd.DataFrame(columns=['mlo_check', 'terminal_check', 'container_check', 'cargo_type_check', 'load_status_check'])
         return
     else:
-        update_info_sheet(df, info_sheet)
-        update_data_sheet(df, data_sheet)
+        update_info_sheet(get_data(), get_data.info_sheet)
+        update_data_sheet(get_data(), get_data.data_sheet)
     
 def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
     df = fn.regex_no_extra_whitespace(df)
@@ -57,14 +60,14 @@ def update_info_sheet(df: pd.DataFrame, info_sheet: xw.sheets):
 
     df = fn.regex_no_extra_whitespace(df)
 
-    mlo = ['ever_partner_code', 'EVER MLO', 'MLO']
+    mlo = ['tpl_ever_partner_code', 'EVER MLO', 'MLO']
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
     cargo_type = ['tpl_cargo_type', 'TYPE OUTPUT', 'ISO TYPE']
     vessel = ['tpl_vessels', 'HL VESSEL OUTPUT', 'OCEAN VESSEL']
     fpod = ['tpl_ports', 'UNLOCODE', 'FINAL POD']
 
     df.loc[:, 'TOL'] = fn.get_template_type(df, terminal)
-    df.loc[:, 'ISO TYPE'] = fn.get_template_type(df, cargo_type)
+    df.loc[:, 'ISO TYPE'] = fn.get_template_type_no_regex(df, cargo_type)
     df.loc[:, 'OCEAN VESSEL'] = fn.get_template_type(df, vessel)
     df.loc[:, 'FINAL POD'] = fn.get_template_type(df, fpod)
     df.loc[:, 'MLO'] = fn.get_template_type(df, mlo)

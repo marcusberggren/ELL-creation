@@ -64,7 +64,7 @@ def get_caller_df():
     df = regex_no_extra_whitespace(df).copy()
     voyage = str(sheet.range('B2').value)
     df['MRN'] = df['MRN'].apply(str)
-
+    df.loc[df['MRN'] == 'None', 'MRN'] = ''
     
     get_caller_df.vessel = sheet.range('A2').value
     get_caller_df.voyage = re.search(r'^\d{0,5}', voyage).group(0)
@@ -119,7 +119,14 @@ def get_template_type(df: pd.DataFrame, template: list):
     df = df[template[2]].replace(new_dict).copy()
     return df
 
-
+def get_template_type_no_regex(df: pd.DataFrame, template: list):
+    file_path = get_path(template[0])
+    df = regex_no_extra_whitespace(df)
+    df['ISO TYPE'] = df['ISO TYPE'].astype(str).str.replace('.0', '', regex=False).copy()
+    df_csv = pd.read_csv(file_path, sep=';', index_col=0, skipinitialspace=True)
+    new_dict = df_csv.to_dict()[template[1]]
+    df = df[template[2]].replace(new_dict, regex=False).copy()
+    return df
 
 
 

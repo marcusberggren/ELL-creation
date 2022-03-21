@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from pathlib import Path
-from numpy import empty
 import xlwings as xw
 import pandas as pd
 import os
@@ -21,7 +20,7 @@ def get_file_name():
     root.lift()
     root.withdraw()
 
-    filename =  filedialog.askopenfilename(initialdir = paths_joined, title = "Select file", filetypes=[("Txt- & Excel files",".xls .xlsx .xlsb")])
+    filename =  filedialog.askopenfilename(initialdir = paths_joined, title = "Select file", filetypes=[("Excel files",".xls .xlsx")])
     root.quit()
 
     if filename == "":

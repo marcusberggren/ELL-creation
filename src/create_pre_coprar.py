@@ -10,6 +10,7 @@ def main():
 def pre_coprar():
     name = "PRE_COPRAR_"
     df = fn.get_caller_df().copy()
+    df.loc[df['PACKAGES'].isnull(), 'PACKAGES'] = 1
     df_update = ce.work_with_df(df)
     df_dummy_added = creating_container_dummy(df_update)
     return fn.save_to_ell(name, ce.cargo_detail(df_dummy_added), ce.manifest(df_dummy_added))

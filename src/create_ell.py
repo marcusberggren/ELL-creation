@@ -8,21 +8,10 @@ def main():
     create_ell()  
 
 def work_with_df(df: pd.DataFrame):
-        
-    #Skapar 4 olika data frames från CSV-filer
-    df_cargo_type = fn.get_csv_data('cargo_type').copy()
-    df_country = fn.get_csv_data('country').copy()
-    df_mlo = fn.get_csv_data('mlo').copy()
-    df_ocean_vessel = fn.get_csv_data('ocean_vessel').copy()
 
     # Regex som byter ut white spaces i början och slutet på varje instans i dataframe
     df = fn.regex_no_extra_whitespace(df).copy()
-    df_cargo_type = fn.regex_no_extra_whitespace(df_cargo_type).copy()
-    df_country = fn.regex_no_extra_whitespace(df_country).copy()
-    df_mlo = fn.regex_no_extra_whitespace(df_mlo).copy()
-    df_ocean_vessel = fn.regex_no_extra_whitespace(df_ocean_vessel).copy()
 
-    # Sätter ihop ISO TYPE och LOAD STATUS
     df.loc[:, 'ISO TYPE'] = df['ISO TYPE'].astype(str)
     df.loc[:, 'ISO STATUS'] = df['ISO TYPE'] + df['LOAD STATUS']
 
@@ -50,27 +39,15 @@ def work_with_df(df: pd.DataFrame):
     # Skapar ny kolumn med gods + MRN. Om MRN är noll (isnull) så läggs enbart gods till
     df.loc[:, 'GOODS+MRN'] = np.where(df['MRN'].isnull(), df['GOODS DESCRIPTION'], df['GOODS DESCRIPTION'] + " " + df['MRN'])
 
-    # Lägger till 'T6 CARGO TYPE' till df när ISO STATUS matchar
-    df = df.merge(df_cargo_type, on='ISO STATUS', how='left').copy()
+    df.loc[:, 'T6 CARGO TYPE'] = fn.get_template_type(df, ['cargo_type', 'T6 CARGO TYPE', 'ISO STATUS'])
 
-    #df_ocean_vessel = df_ocean_vessel.drop_duplicates(inplace=True)
-    # Lägger till 'CALL SIGN' till df när OCEAN VESSEL matchar
-    #df = df.merge(df_ocean_vessel, how='left', on='OCEAN VESSEL').copy()
+    df.loc[:, 'CALL SIGN'] = fn.get_template_type(df, ['ocean_vessel', 'CALL SIGN', 'OCEAN VESSEL' ])
 
-    # Ändrar 'PORT' till 2 bokstäver, används i merge #1 nedan
-    df.loc[:, 'PORT'] = df['POL'].str[:2]
-
-    #Merge df_country och 'PORT'
-    df = df.merge(df_country, on='PORT', how='left').copy()
-    df = df.merge(df_mlo, on='MLO', how='left').copy()
-
-    # Viktigt att denna ändring görs för merge #2
-    df.loc[:, 'PORT'] = fn.get_caller_df.pol[:2]
-
-    # Merge #2 lägger till suffixes när kolumnerna 'COUNTRY' krockar
-    df = df.merge(df_country, on='PORT', how='left', suffixes=('_CONSIGNEE','_SHIPPER')).copy()
-
-    # Slår ihop flera conditions och sätter taravikterna rätt i df['TARE']
+    df.loc[:, 'POD SHORT'] = df['POL'].str[:2]
+    df.loc[:, 'POL SHORT'] = fn.get_caller_df.pol[:2]
+    df.loc[:, 'POD MANIFEST'] = fn.get_template_type(df, ['country', 'COUNTRY', 'POD SHORT'])
+    df.loc[:, 'POL MANIFEST'] = fn.get_template_type(df, ['country', 'COUNTRY', 'POL SHORT'])
+    df.loc[:, 'MLO MANIFEST'] = fn.get_template_type(df, ['mlo', 'NAME', 'MLO'])
     df.loc[:, 'TARE'] = fn.get_tare(df)
 
     """
@@ -88,7 +65,7 @@ def work_with_df(df: pd.DataFrame):
     # Ytterligare två conditions men som skapar df['TRANSHIPMENT']
     conditions_pod =[
         df['POD STATUS'] == "T",
-        df['POD STATUS'] == "Y"
+        df['POD STATUS'] == "L"
         ]
     values_pod = ["Y", "N"]
 
@@ -110,7 +87,7 @@ def cargo_detail(df: pd.DataFrame):
     df_cd.loc[:, 'Pod'] = df['POL']
     df_cd.loc[:, 'Pod call seq'] = 1
     df_cd.loc[:, 'Pod terminal'] = df['TOL']
-    df_cd.loc[:, 'Pod Status'] = "T"
+    df_cd.loc[:, 'Pod Status'] = df['POD STATUS']
     df_cd.loc[:, 'POL'] = fn.get_caller_df.pol
     df_cd.loc[:, 'Pol terminal'] = fn.get_template_type(df_cd, ['terminal', 'TERMINAL', 'POL'])
     df_cd.loc[:, 'Pol Status'] = "L"
@@ -120,7 +97,7 @@ def cargo_detail(df: pd.DataFrame):
     df_cd.loc[:, 'MLO PO'] = df['PO NUMBER']
     df_cd.loc[:, 'Booking Reference'] = df['BOOKING NUMBER']
     df_cd.loc[:, 'Mother Vessel'] = df['OCEAN VESSEL']
-    df_cd.loc[:, 'Mother Vessel CallSign'] = "" #df['CALL SIGN']
+    df_cd.loc[:, 'Mother Vessel CallSign'] = df['CALL SIGN']
     df_cd.loc[:, 'Mother Voyage'] = df['VOYAGE']
     df_cd.loc[:, 'F.Destination'] = df['FINAL POD']
     df_cd.loc[:, 'Cargo type'] = df['T6 CARGO TYPE']
@@ -164,8 +141,8 @@ def manifest(df: pd.DataFrame):
     df_man.loc[:, 'Net Weight in Kilos'] = fn.get_net_weight(df)
     df_man.loc[:, 'Deep Sea Vessel'] = df['OCEAN VESSEL']
     df_man.loc[:, 'ETA'] = df['ETA']
-    df_man.loc[:, 'Shipper'] = df['SHIPPER'] + " " + df['COUNTRY_SHIPPER']
-    df_man.loc[:, 'Consignee'] = df['CONSIGNEE'] + " " + df['COUNTRY_CONSIGNEE']
+    df_man.loc[:, 'Shipper'] = df['MLO MANIFEST'] + " " + df['POL MANIFEST']
+    df_man.loc[:, 'Consignee'] = df['MLO MANIFEST'] + " " + df['POD MANIFEST']
     df_man.loc[:, 'Notify'] = df_man['Consignee']
     df_man.loc[:, 'MRN Number'] = df['MRN']
     df_man.loc[:, 'Package Content'] = df['GOODS DESCRIPTION']
