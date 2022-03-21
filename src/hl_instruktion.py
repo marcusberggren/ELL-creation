@@ -101,40 +101,40 @@ def get_data():
 def create_dataframe():
 
     df = pd.DataFrame(get_data())
-    df.columns = ['BOOKING NO.', 'PORT', 'TERMINAL', 'CONTAINER NO.', 'ISO TYPE', 'NET WEIGHT', 'VGM', 'PO NUMBER', 
-    'NO. OF PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOY']
+    df.columns = ['BOOKING NUMBER', 'POL', 'TOL', 'CONTAINER', 'ISO TYPE', 'NET WEIGHT', 'VGM', 'PO NUMBER', 
+    'PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOYAGE']
 
-    df_info_sheet = pd.DataFrame(columns=['BOOKING NO.', 'MLO', 'PORT', 'TERMINAL', 'SLOT ACC', 'CONTAINER NO.', 'ISO TYPE',
-    'NET WEIGHT', 'POD STATUS', 'LOAD STATUS', 'VGM', 'OOG', 'IMDG', 'UNNR', 'MRN / REMARKS', 'CHEMICAL', 'TEMP',
-    'PO NUMBER', 'CUSTOMS STATUS', 'NO. OF PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOY', 'ETA', 'FINAL DEST'])
+    df_info_sheet = pd.DataFrame(columns=['BOOKING NUMBER', 'MLO', 'POL', 'TOL', 'CONTAINER', 'ISO TYPE',
+    'NET WEIGHT', 'POD STATUS', 'LOAD STATUS', 'VGM', 'OOG', 'REMARK', 'IMDG', 'UNNR', 'CHEM REF', 'MRN', 'TEMP',
+    'PO NUMBER', 'CUSTOMS STATUS', 'PACKAGES', 'GOODS DESCRIPTION', 'OCEAN VESSEL', 'VOYAGE', 'ETA', 'FINAL POD'])
 
-    df_info_sheet['BOOKING NO.'] = df['BOOKING NO.']
-    df_info_sheet['MLO'] = "HL"
-    df_info_sheet['PORT'] = df['PORT']
-    df_info_sheet['TERMINAL'] = df['TERMINAL']
-    df_info_sheet['SLOT ACC'] = "XCL"
-    df_info_sheet['CONTAINER NO.'] = df['CONTAINER NO.']
-    df_info_sheet['ISO TYPE'] = df['ISO TYPE']
-    df_info_sheet['NET WEIGHT'] = df['NET WEIGHT']
-    df_info_sheet['POD STATUS'] = "T"
-    df_info_sheet['LOAD STATUS'] = "LA"
-    df_info_sheet['VGM'] = df['VGM']
-    df_info_sheet['OOG'] = ""
-    df_info_sheet['IMDG'] = ""
-    df_info_sheet['UNNR'] = ""
-    df_info_sheet['MRN / REMARKS'] = ""
-    df_info_sheet['CHEMICAL'] = ""
-    df_info_sheet['TEMP'] = ""
-    df_info_sheet['PO NUMBER'] = df['PO NUMBER']
-    df_info_sheet['CUSTOMS STATUS'] = "T1"
-    df_info_sheet['NO. OF PACKAGES'] = df['NO. OF PACKAGES']
-    df_info_sheet['GOODS DESCRIPTION'] = df['GOODS DESCRIPTION']
-    df_info_sheet['OCEAN VESSEL'] = df['OCEAN VESSEL']
-    df_info_sheet['VOY'] = df['VOY']
-    df_info_sheet['ETA'] = ""
-    df_info_sheet['FINAL DEST'] = ""
+    df_info_sheet.loc[:,'BOOKING NUMBER'] = df['BOOKING NUMBER']
+    df_info_sheet.loc[:, 'MLO'] = "HL"
+    df_info_sheet.loc[:, 'POL'] = df['POL']
+    df_info_sheet.loc[:, 'TOL'] = df['TOL']
+    df_info_sheet.loc[:, 'CONTAINER'] = df['CONTAINER']
+    df_info_sheet.loc[:, 'ISO TYPE'] = df['ISO TYPE']
+    df_info_sheet.loc[:, 'NET WEIGHT'] = df['NET WEIGHT']
+    df_info_sheet.loc[:, 'POD STATUS'] = "T"
+    df_info_sheet.loc[:, 'LOAD STATUS'] = "LA"
+    df_info_sheet.loc[:, 'VGM'] = df['VGM']
+    df_info_sheet.loc[:, 'OOG'] = ""
+    df_info_sheet.loc[:, 'REMARK'] = ""
+    df_info_sheet.loc[:, 'IMDG'] = ""
+    df_info_sheet.loc[:, 'UNNR'] = ""
+    df_info_sheet.loc[:, 'CHEM REF'] = ""
+    df_info_sheet.loc[:, 'MRN'] = ""
+    df_info_sheet.loc[:, 'TEMP'] = ""
+    df_info_sheet.loc[:, 'PO NUMBER'] = df['PO NUMBER']
+    df_info_sheet.loc[:, 'CUSTOMS STATUS'] = "T1"
+    df_info_sheet.loc[:, 'PACKAGES'] = df['PACKAGES']
+    df_info_sheet.loc[:, 'GOODS DESCRIPTION'] = df['GOODS DESCRIPTION']
+    df_info_sheet.loc[:, 'OCEAN VESSEL'] = df['OCEAN VESSEL']
+    df_info_sheet.loc[:, 'VOYAGE'] = df['VOYAGE']
+    df_info_sheet.loc[:, 'ETA'] = ""
+    df_info_sheet.loc[:, 'FINAL POD'] = ""
 
-    df_info_sheet = df_info_sheet.sort_values(by=['BOOKING NO.', 'CONTAINER NO.'], ascending= (True, True))
+    df_info_sheet = df_info_sheet.sort_values(by=['BOOKING NUMBER', 'CONTAINER'], ascending= (True, True)).copy()
 
     return df_info_sheet
 
@@ -152,10 +152,11 @@ def compare_FPOD_bokningsblad():
 
     with xw.App(visible=False) as app:
         wb_bokningsblad = app.books.open(bokningsblad)
-        ws_bokningsblad = wb_bokningsblad.sheets['Info']
-        range_bokningsblad = ws_bokningsblad.range('A3').expand() #dynamisk range
+        ws_bokningsblad = wb_bokningsblad.sheets['INFO']
+        range_bokningsblad = ws_bokningsblad.range('A4').expand() #dynamisk range
         df_bokningsblad = ws_bokningsblad.range(range_bokningsblad).options(pd.DataFrame, index=False, header=True).value #dynamisk range
-        df_bokningsblad = df_bokningsblad[['BOOKING NO.', 'FINAL DEST']]
+        df_bokningsblad = df_bokningsblad[['BOOKING NUMBER', 'FINAL POD']].copy()
+        wb_bokningsblad.close()
 
     wb_hl = xw.Book.caller()
     ws_hl = wb_hl.sheets['RESULTAT']
@@ -164,13 +165,13 @@ def compare_FPOD_bokningsblad():
 
     df_hl = ws_hl.range('A1:Y' + str(lower_row)).options(pd.DataFrame, index=False, header=True).value #dynamisk range
 
-    df_hl = df_hl['BOOKING NO.']
-    df_hl = pd.DataFrame(df_hl)
+    df_hl = df_hl['BOOKING NUMBER']
+    df_hl = pd.DataFrame(df_hl).copy()
 
-    dict_bokningsblad = dict(zip(df_bokningsblad['BOOKING NO.'], df_bokningsblad['FINAL DEST']))
-    df_hl['FINAL DEST'] = df_hl['BOOKING NO.'].map(dict_bokningsblad)
+    dict_bokningsblad = dict(zip(df_bokningsblad['BOOKING NUMBER'], df_bokningsblad['FINAL POD']))
+    df_hl['FINAL POD'] = df_hl['BOOKING NUMBER'].map(dict_bokningsblad)
 
-    ws_hl.range('Y1').options(pd.Series, header=1, index=False).value = df_hl['FINAL DEST']
+    ws_hl.range('Y1').options(pd.Series, header=1, index=False).value = df_hl['FINAL POD']
 
 
 

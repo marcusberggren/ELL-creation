@@ -158,13 +158,14 @@ def container_check(container_no: str):
     
     value_multiply, summa, = 0, 0
 
-    if re.search(r'^\w{4}\d{7}', container_no):
-    
-        if container_no == None:
-            return True
-        else:
-            len_cont = len(container_no)
+    if container_no == None:
+        return True
+    if container_no == '':
+        return True
 
+    if re.search(r'^\w{4}\d{7}', container_no):
+
+        len_cont = len(container_no)
 
         if container_no[:3] == "DUM":
             return False

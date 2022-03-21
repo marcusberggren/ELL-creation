@@ -1,3 +1,4 @@
+from email.policy import default
 import pandas as pd
 import xlwings as xw
 import functions as fn
@@ -12,8 +13,10 @@ def main():
     data_table = info_sheet.range('A4').expand()
     df = info_sheet.range(data_table).options(pd.DataFrame, index=False, header=True).value
     df = pd.DataFrame(df).copy()
-    df['CONTAINER'] = df['CONTAINER'].apply(str)
-    
+
+    df['CONTAINER'] = df['CONTAINER'].apply(str).copy()     #formats column to string so fn.container_check works
+    df.loc[df['CONTAINER'] == 'None', 'CONTAINER'] = ''     #since column is string need to change 'None' to ''
+
     if df.shape[0] == 0:
         #df_columns = pd.DataFrame(columns=['mlo_check', 'terminal_check', 'container_check', 'cargo_type_check', 'load_status_check'])
         return

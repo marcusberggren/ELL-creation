@@ -32,6 +32,7 @@ def pre_export():
             sheet.range('A5').options(pd.DataFrame, index=False, header=False).value = group
 
             wb.save(name_of_file_and_path + name + ".xlsx")
+            wb.close()
 
 if __name__ == '__main__':
     file_path = fn.get_mock_caller('0109_Bokningsblad.xlsb')
