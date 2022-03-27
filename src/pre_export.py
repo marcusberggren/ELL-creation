@@ -1,6 +1,5 @@
 import pandas as pd
 import xlwings as xw
-from pathlib import Path
 import os
 import functions as fn
 
