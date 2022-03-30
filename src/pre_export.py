@@ -24,13 +24,13 @@ def pre_export():
     for name, group in df_group:
         with xw.App(visible=False) as app:
             wb = app.books.open(template_file)
+            wb.save(name_of_file_and_path + name + ".xlsx")
             sheet = wb.sheets['INFO']
             sheet.range('A2').value = vessel
             sheet.range('B2').value = voyage
             sheet.range('C2').value = pol
             sheet.range('A5').options(pd.DataFrame, index=False, header=False).value = group
-
-            wb.save(name_of_file_and_path + name + ".xlsx")
+            wb.save()
             wb.close()
 
 if __name__ == '__main__':

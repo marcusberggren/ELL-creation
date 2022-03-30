@@ -73,7 +73,7 @@ def finish(df: pd.DataFrame):
         dcm_sheet.range((14, 1), (14 + len_df, 19)).insert('down')
         dcm_sheet.range('B14').options(pd.DataFrame, index=False, header=False).value = df.copy()
 
-        wb.save(name_of_file_and_path)
+        wb.save()
         wb.close()
 
 if __name__ == '__main__':

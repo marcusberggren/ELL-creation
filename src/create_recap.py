@@ -48,6 +48,11 @@ def open_ell_copy_data():
 
     df = df.rename(columns={'ISO Container Type':'ISO TYPE'})
     df.loc[:, 'teus'] = fn.get_TEUs(df)
+    df.loc[:, 'mt_or_not'] = df['Commodity'].str.contains('MT')
+    df.loc[df['mt_or_not'] == True, 'mt_teus'] = df['teus']
+    df.loc[df['mt_or_not'] == False, 'la_teus'] = df['teus']
+    df.loc[df['mt_or_not'] == True, 'mt_weight'] = df['Weight in MT']
+    df.loc[df['mt_or_not'] == False, 'la_weight'] = df['Weight in MT']
     wb_recap = xw.Book.caller()
     ws_cargo_detail = wb_recap.sheets('Cargo Detail')
 

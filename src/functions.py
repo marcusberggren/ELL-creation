@@ -27,6 +27,7 @@ def save_to_ell(name: str, df1: pd.DataFrame, df2: pd.DataFrame):
     
     with xw.App(visible=False) as app:
         wb = app.books.open(get_path('tpl_ell'))
+        wb.save(name_of_file_and_path)
         cargo_detail_sheet = wb.sheets['Cargo Detail']
         manifest_sheet = wb.sheets['Manifest']
         cargo_detail_sheet.range('A6').options(pd.DataFrame, index=False, header=False).value = df1.copy()
@@ -35,7 +36,7 @@ def save_to_ell(name: str, df1: pd.DataFrame, df2: pd.DataFrame):
         cargo_detail_sheet.range('C2').value = leg
         cargo_detail_sheet.range('F2').value = pol
         manifest_sheet.range('A2').options(pd.DataFrame, index=False, header=False).value = df2.copy()
-        wb.save(name_of_file_and_path)
+        wb.save()
         wb.close()
 
 # GET

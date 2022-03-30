@@ -53,7 +53,7 @@ def finish(df: pd.DataFrame):
             dcm_sheet.range((11, 1), (11, 10)).delete('up')
             dcm_sheet.range('B11').options(pd.DataFrame, index=False, header=False).value = df.copy()
 
-            wb.save(name_of_file_and_path)
+            wb.save()
             wb.to_pdf(pdf_name)
             wb.close()
 

@@ -12,7 +12,7 @@ def main():
 
     vessel = sheet.range('A2').value
     alt_voy = sheet.range('F2').value
-    pol = sheet.range('D2').value
+    pol = sheet.range('C2').value
 
     if alt_voy is None:
         alt_voy = "TBA"
@@ -123,11 +123,11 @@ def main():
         folder_path = os.path.split(wb_caller_name)[0]
         time_str = datetime.now().strftime("%y%m%d")
 
-
-
         filename = "CBF_" + vessel + "_" + str(alt_voy) + "_" + pol + "_" + time_str + ".xlsx"
         dir_path = os.path.join(folder_path, filename)
         
+        wb.save(dir_path)
+
         ws = wb.sheets['CBF TTL']
         ws.range('B3').value = vessel
         ws.range('B4').value = alt_voy
@@ -145,5 +145,5 @@ def main():
             ws.range('C' + str(cell + 4)).options(index=False, header=False).value = df_new[4][i]
             cell += 7
 
-        wb.save(dir_path)
+        wb.save()
         wb.close()

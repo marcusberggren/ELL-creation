@@ -21,11 +21,11 @@ def main():
         #df_columns = pd.DataFrame(columns=['mlo_check', 'terminal_check', 'container_check', 'cargo_type_check', 'load_status_check'])
         return
     else:
-        update_info_sheet(get_data(), get_data.info_sheet)
+        update_info_sheet_downscaled(get_data(), get_data.info_sheet)
         update_data_sheet(get_data(), get_data.data_sheet)
     
 def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
-    df = fn.regex_no_extra_whitespace(df)
+    #df = fn.regex_no_extra_whitespace(df)
     data_df = pd.DataFrame()
 
 
@@ -50,12 +50,13 @@ def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
     data_df.loc[:, "40feet"] = 0
     data_df.loc[data_df['get_teus'] == 1, "20feet"] = 1
     data_df.loc[data_df['get_teus'] == 2, "40feet"] = 1
+    
 
-    data_sheet.range('A4').options(pd.DataFrame, index=False, header=True).value = data_df
+    data_sheet.range('A4').options(pd.DataFrame, index=False, header=True).value = data_df.copy()
 
 def update_info_sheet(df: pd.DataFrame, info_sheet: xw.sheets):
 
-    df = fn.regex_no_extra_whitespace(df)
+    #df = fn.regex_no_extra_whitespace(df)
 
     mlo = ['tpl_ever_partner_code', 'EVER MLO', 'MLO']
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
@@ -70,3 +71,25 @@ def update_info_sheet(df: pd.DataFrame, info_sheet: xw.sheets):
     df.loc[:, 'MLO'] = fn.get_template_type(df, mlo)
 
     info_sheet.range('A5').options(pd.DataFrame, index=False, header=False).value = df.copy()
+
+def update_info_sheet_downscaled(df: pd.DataFrame, info_sheet: xw.sheets):
+
+    #df = fn.regex_no_extra_whitespace(df)
+
+    mlo = ['tpl_ever_partner_code', 'EVER MLO', 'MLO']
+    terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
+    cargo_type = ['tpl_cargo_type', 'TYPE OUTPUT', 'ISO TYPE']
+    vessel = ['tpl_vessels', 'HL VESSEL OUTPUT', 'OCEAN VESSEL']
+    fpod = ['tpl_ports', 'UNLOCODE', 'FINAL POD']
+
+    df.loc[:, 'MLO'] = fn.get_template_type(df, mlo)
+    df.loc[:, 'TOL'] = fn.get_template_type(df, terminal)
+    df.loc[:, 'ISO TYPE'] = fn.get_template_type_no_regex(df, cargo_type)
+    df.loc[:, 'OCEAN VESSEL'] = fn.get_template_type(df, vessel)
+    df.loc[:, 'FINAL POD'] = fn.get_template_type(df, fpod)
+    
+    info_sheet.range('B5').options(pd.Series, index=False, header=False).value = df['MLO'].copy()
+    info_sheet.range('D5').options(pd.Series, index=False, header=False).value = df['TOL'].copy()
+    info_sheet.range('F5').options(pd.Series, index=False, header=False).value = df['ISO TYPE'].copy()
+    info_sheet.range('V5').options(pd.Series, index=False, header=False).value = df['OCEAN VESSEL'].copy()
+    info_sheet.range('Y5').options(pd.Series, index=False, header=False).value = df['FINAL POD'].copy()
