@@ -14,6 +14,7 @@ def work_with_df(df: pd.DataFrame):
 
     df.loc[:, 'ISO TYPE'] = df['ISO TYPE'].astype(str)
     df.loc[:, 'ISO STATUS'] = df['ISO TYPE'] + df['LOAD STATUS']
+    df.loc[:, 'GOODS DESCRIPTION'] = df['GOODS DESCRIPTION'].astype(str)
 
     # När NET WEIGHT är mindre än 100 men större än 0 multiplicera med 1000
     df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'NET WEIGHT'] *= 1000

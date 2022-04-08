@@ -56,7 +56,7 @@ def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):
 
 def update_info_sheet(df: pd.DataFrame, info_sheet: xw.sheets):
 
-    #df = fn.regex_no_extra_whitespace(df)
+    df = fn.regex_no_extra_whitespace(df)
 
     mlo = ['tpl_ever_partner_code', 'EVER MLO', 'MLO']
     terminal = ['tpl_terminal', 'TERMINAL OUTPUT', 'TOL']
