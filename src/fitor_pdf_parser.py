@@ -287,21 +287,22 @@ def manifest_details(manifest_list):
     counter_pod = 0
     counter_booking = 0
     counter_since_customs_match = 0
+    voyage = ""
 
-    for num, str in enumerate(manifest_list):
+    for num, word in enumerate(manifest_list):
 
         #matching CUSTOMS STATUS
-        customs_match = re.search(r'(?<=Customs status \")\w', str)
+        customs_match = re.search(r'(?<=Customs status \")\w', word)
         if customs_match:
             customs_status = customs_match.group()
         else:
             counter_since_customs_match += 1
 
         #matching OCEAN VESSEL
-        transhipment_match = re.search(r'^Transhipment by', str)
-        voy_match = re.search(r'^.+(?= Voy)', str)
-        vessel_match = re.search(r'(?<=Transhipment by\s).+[^\s*Voy\.*]', str)
-        vessel_match_rest = re.search(r'^\w+[^ Voy]', str)
+        transhipment_match = re.search(r'^Transhipment by', word)
+        voy_match = re.search(r'^.+(?= Voy)', word)
+        vessel_match = re.search(r'(?<=Transhipment by\s).+[^\s*Voy\.*]', word)
+        vessel_match_rest = re.search(r'^\w+[^ Voy]', word)
 
         if counter_since_customs_match < 5:
             if transhipment_match and vessel_match and voy_match:
@@ -315,15 +316,26 @@ def manifest_details(manifest_list):
 
         ocean_vessel = ' '.join(ocean_vessel_list).replace('Vessel ', '')
 
+        #matching VOY
+        voy_match = re.search(r'(?<=[VvOoYy]{3}\s)\w+', word)
+        voy_match_last_row = re.search(r'[VvOoYy]{3}$', manifest_list[num-1])
+
+        if counter_since_customs_match < 4:
+            if voy_match:
+                voyage = str(voy_match.group())
+            elif voy_match_last_row:
+                voyage = str(re.search(r'^\w+[-]*\w*', word).group())
+    
+
         #matching FINAL POD
-        date_last_match = re.search(r'\d+\.+\d+\.+\d+$', str)
-        etd_match = re.search(r'^ETD\s*\d+\.+\d+\.+\d+\s*\D+', str)
-        only_etd_date = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+)$', str)
-        fpod_dual_dates = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+\s*)(\D*)(\s+\d+\.+\d+\.+\d+)', str)
-        fpod_single_date = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+\s*)(\D*)', str)
-        get_all_upper = re.search(r'^[\D]*', str)
-        eta = re.search(r'ETA', str)
-        eta_twice_same_row = re.search(r'ETA.+ETA', str)
+        date_last_match = re.search(r'\d+\.+\d+\.+\d+$', word)
+        etd_match = re.search(r'^ETD\s*\d+\.+\d+\.+\d+\s*\D+', word)
+        only_etd_date = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+)$', word)
+        fpod_dual_dates = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+\s*)(\D*)(\s+\d+\.+\d+\.+\d+)', word)
+        fpod_single_date = re.search(r'^(ETD\s*\d+\.+\d+\.+\d+\s*)(\D*)', word)
+        get_all_upper = re.search(r'^[\D]*', word)
+        eta = re.search(r'ETA', word)
+        eta_twice_same_row = re.search(r'ETA.+ETA', word)
         eta_twice_in_two_rows = re.search(r'ETA', manifest_list[num-1])
 
         def del_fillers_pod(string):
@@ -356,13 +368,13 @@ def manifest_details(manifest_list):
             elif eta and eta_twice_in_two_rows:
                 final_pod_list.append(re.search(r'^(ETA\s*\d+\.+\d+\.+\d+\s*)(\D*)', manifest_list[num-1]).group(2))
             elif eta_twice_same_row:
-                final_pod_list.append(re.search(r'^(ETA\s*\d+\.+\d+\.+\d+\s*)(\D*)(?=\sETA)', str).group(2))
+                final_pod_list.append(re.search(r'^(ETA\s*\d+\.+\d+\.+\d+\s*)(\D*)(?=\sETA)', word).group(2))
 
 
         final_pod = ' '.join(final_pod_list)
 
         #matching BOOKING NUMBER
-        ref_match = re.search(r'^ref', str, flags=re.IGNORECASE)
+        ref_match = re.search(r'^ref', word, flags=re.IGNORECASE)
 
         def del_fillers_ref(string):
             new_string = re.sub(r'^[RrEeFf]{3}[:\.\s]*', '', string)
@@ -370,14 +382,14 @@ def manifest_details(manifest_list):
             return new_string2
 
         if ref_match and counter_booking != 1:
-            booking_number = del_fillers_ref(str)
+            booking_number = del_fillers_ref(word)
 
         elif counter_booking == 1:
             if transhipment_match:
                 counter_booking = 0
 
             if not transhipment_match:
-                booking_number = del_fillers_ref(str)
+                booking_number = del_fillers_ref(word)
                 counter_booking = 0
 
         elif customs_match:
@@ -387,6 +399,7 @@ def manifest_details(manifest_list):
         "BOOKING NUMBER": booking_number,
         "CUSTOMS STATUS": customs_status,
         "OCEAN VESSEL": ocean_vessel,
+        "VOY" : voyage,
         "FINAL POD": final_pod
         }
     
@@ -479,6 +492,7 @@ def run_it_all():
     list_of_packages = []
     list_of_goods = []
     list_of_ocean_vessels = []
+    list_of_voy = []
     list_of_final_pod = []
     
     for booking_no in range(bookings_count):
@@ -506,6 +520,7 @@ def run_it_all():
         list_of_goods += goods_details(get_goods_info(data.goods, start, stop)[0])[2]
         list_of_customs_status += manifest_details(get_goods_info(data.goods, start, stop)[1])["CUSTOMS STATUS"] * len(container_list)
         list_of_ocean_vessels += [manifest_details(get_goods_info(data.goods, start, stop)[1])["OCEAN VESSEL"]] * len(container_list)
+        list_of_voy += [manifest_details(get_goods_info(data.goods, start, stop)[1])["VOY"]] * len(container_list)
         list_of_final_pod += [manifest_details(get_goods_info(data.goods, start, stop)[1])["FINAL POD"]] * len(container_list)
         list_of_load_status += goods_details(get_goods_info(data.goods, start, stop)[0])[3]
 
@@ -570,7 +585,6 @@ def run_it_all():
         cd_df_rest = pd.DataFrame(arr1, columns=['MATCH', 'CONTAINER', 'CD TOD', 'CD ISO TYPE', 'CD LOAD STATUS', 'GWT', 'IMDG', 'UNNR', 'TEMP', 'OOG', 'REMARK']).fillna('')
 
 
-    
     dict_final = {
         'MATCH': "",
         'BOOKING NUMBER': list_of_booking_refs,
@@ -595,6 +609,7 @@ def run_it_all():
         'PACKAGES': list_of_packages,
         'GOODS DESCRIPTION': list_of_goods,
         'OCEAN VESSEL': list_of_ocean_vessels,
+        'VOY' : list_of_voy,
         'FINAL POD': list_of_pods
         }
 
@@ -661,7 +676,7 @@ def prep_ell_data():
     wb = xw.Book.caller()
     sheet = wb.sheets('RESULT')
     last_row = sheet.range('A' + str(sheet.cells.last_cell.row)).end('up').row
-    data_range = sheet.range('A5:Y' + str(last_row))
+    data_range = sheet.range('A5:Z' + str(last_row))
     data = sheet.range(data_range).options(pd.DataFrame, index=False, header=False).value
     df = pd.DataFrame(data)
     df = df.rename(columns= {
@@ -689,7 +704,8 @@ def prep_ell_data():
         21: 'PACKAGES',
         22: 'GOODS DESCRIPTION',
         23: 'OCEAN VESSEL',
-        24: 'FINAL POD'
+        24: 'VOY',
+        25: 'FINAL POD'
         })
 
     df_pod = fn.get_csv_data('terminal').copy()
@@ -731,7 +747,7 @@ def prep_ell_data():
         df_cd.loc[:, 'Booking Reference'] = df['BOOKING NUMBER']
         df_cd.loc[:, 'Mother Vessel'] = df['OCEAN VESSEL']
         df_cd.loc[:, 'Mother Vessel CallSign'] = np.nan
-        df_cd.loc[:, 'Mother Voyage'] = np.nan
+        df_cd.loc[:, 'Mother Voyage'] = df['VOY']
         df_cd.loc[:, 'F.Destination'] = df['FINAL POD']
         df_cd.loc[:, 'Cargo type'] = df['CONCAT'].replace(dict_ct)
         df_cd.loc[:, 'ISO Container Type'] = df['MAN ISO TYPE']
@@ -823,6 +839,6 @@ def export_ell_data():
         wb.save()
         wb.close()
 
-if __name__ == "__main__":
-    file_path = r'C:\Users\SWV224\BOLLORE\XPF - Documents\MAINTENANCE\Test files\FITOR_Makro.xlsm'
-    xw.Book(file_path).set_mock_caller()
+#if __name__ == "__main__":
+    #file_path = r'C:\Users\SWV224\BOLLORE\XPF - Documents\MAINTENANCE\Test files\FITOR_Makro.xlsm'
+    #xw.Book(file_path).set_mock_caller()
