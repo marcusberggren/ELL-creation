@@ -21,7 +21,7 @@ def main():
         #df_columns = pd.DataFrame(columns=['mlo_check', 'terminal_check', 'container_check', 'cargo_type_check', 'load_status_check'])
         return
     else:
-        update_info_sheet_downscaled(get_data(), get_data.info_sheet)
+        update_info_sheet(get_data(), get_data.info_sheet)
         update_data_sheet(get_data(), get_data.data_sheet)
     
 def update_data_sheet(df: pd.DataFrame, data_sheet: xw.sheets):

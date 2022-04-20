@@ -3,7 +3,6 @@ import xlwings as xw
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
-from pathlib import Path
 from datetime import datetime
 import fitz
 import re
@@ -301,12 +300,13 @@ def manifest_details(manifest_list):
         #matching OCEAN VESSEL
         transhipment_match = re.search(r'^Transhipment by', word)
         voy_match = re.search(r'^.+(?= Voy)', word)
+        vessel_match_voy = re.search(r'(?<=Transhipment by\s)(.+)([VvOoYy]{3})', word)
         vessel_match = re.search(r'(?<=Transhipment by\s).+[^\s*Voy\.*]', word)
         vessel_match_rest = re.search(r'^\w+[^ Voy]', word)
 
         if counter_since_customs_match < 5:
             if transhipment_match and vessel_match and voy_match:
-                ocean_vessel_list.append(vessel_match.group())
+                ocean_vessel_list.append(vessel_match_voy.group(1))
 
             elif transhipment_match and not voy_match:
                 ocean_vessel_list.append(vessel_match.group())
@@ -317,14 +317,14 @@ def manifest_details(manifest_list):
         ocean_vessel = ' '.join(ocean_vessel_list).replace('Vessel ', '')
 
         #matching VOY
-        voy_match = re.search(r'(?<=[VvOoYy]{3}\s)\w+', word)
-        voy_match_last_row = re.search(r'[VvOoYy]{3}$', manifest_list[num-1])
+        voy_match = re.search(r'(?<=[VvOoYy]{3})(\s*\.*\s*)(\w+[-/]*\w*)', word)
+        voy_match_last_row = re.search(r'[VvOoYy]{3}\s*\.*$', manifest_list[num-1])
 
         if counter_since_customs_match < 4:
             if voy_match:
-                voyage = str(voy_match.group())
+                voyage = str(voy_match.group(2))
             elif voy_match_last_row:
-                voyage = str(re.search(r'^\w+[-]*\w*', word).group())
+                voyage = str(re.search(r'^\w+[-/]*\w*', word).group())
     
 
         #matching FINAL POD
@@ -377,7 +377,7 @@ def manifest_details(manifest_list):
         ref_match = re.search(r'^ref', word, flags=re.IGNORECASE)
 
         def del_fillers_ref(string):
-            new_string = re.sub(r'^[RrEeFf]{3}[:\.\s]*', '', string)
+            new_string = re.sub(r'^[VvTtGg]*\s*[RrEeFf]{3}[:\.\s]*', '', string)
             new_string2 = re.sub(r'\s*OPS.*', '', new_string)
             return new_string2
 
@@ -411,28 +411,32 @@ def goods_details(goods_list):
     list_of_goods = []
     list_of_load_status = []
     
-    for val in goods_list:
+    for num, val in enumerate(goods_list):
 
         match_unit_type = re.search(r"^\d{2}\'\D+", val)
+        match_unit_type_last_row = re.search(r"^\d{2}\'\D+", goods_list[num-1])
         match_goods_info = re.search(r'^(\d+)\s+\w*\s+(\D+)', val)
         match_goods_info2 = re.search(r'^\D*$', val)
         match_empty = re.search(r'EMPTY|^MT', val)
 
         if match_unit_type:
             list_of_unit_types.append(match_unit_type.group())
-
-        if match_goods_info:
+        
+        if match_goods_info and match_unit_type_last_row:
             list_of_packages.append(int(match_goods_info.group(1)))
             list_of_goods.append(match_goods_info.group(2))
-        elif match_goods_info2:
+
+        elif match_goods_info2 and match_unit_type_last_row:
             list_of_goods.append(match_goods_info2.group())
+
 
         if match_empty:
             list_of_load_status.append("MT")
-        elif match_goods_info:
+        elif match_goods_info and match_unit_type_last_row:
             list_of_load_status.append("LA")
-        elif match_goods_info2:
+        elif match_goods_info2 and match_unit_type_last_row:
             list_of_load_status.append("LA")
+
 
     return list_of_unit_types, list_of_packages, list_of_goods, list_of_load_status
 
@@ -505,6 +509,7 @@ def run_it_all():
         booking_ref_list = [manifest_details(get_goods_info(data.goods, start, stop)[1])["BOOKING NUMBER"]] * len(container_list)
         netw_list = get_netw_and_tare(data.netw, data.tare, start, stop)[0]
         tare_list = get_netw_and_tare(data.netw, data.tare, start, stop)[1]
+        voy_list = [manifest_details(get_goods_info(data.goods, start, stop)[1])["VOY"]] * len(container_list)
 
         #creation of lists
         list_of_shipper += [get_shipper(data.shipper, start, stop)]*len(container_list)
@@ -520,9 +525,13 @@ def run_it_all():
         list_of_goods += goods_details(get_goods_info(data.goods, start, stop)[0])[2]
         list_of_customs_status += manifest_details(get_goods_info(data.goods, start, stop)[1])["CUSTOMS STATUS"] * len(container_list)
         list_of_ocean_vessels += [manifest_details(get_goods_info(data.goods, start, stop)[1])["OCEAN VESSEL"]] * len(container_list)
-        list_of_voy += [manifest_details(get_goods_info(data.goods, start, stop)[1])["VOY"]] * len(container_list)
         list_of_final_pod += [manifest_details(get_goods_info(data.goods, start, stop)[1])["FINAL POD"]] * len(container_list)
         list_of_load_status += goods_details(get_goods_info(data.goods, start, stop)[0])[3]
+
+        if not voy_list:
+            list_of_voy += [""] * len(container_list)
+        else:
+            list_of_voy += voy_list
 
         if not booking_ref_list:
             list_of_booking_refs += [""] * len(container_list)
@@ -612,6 +621,34 @@ def run_it_all():
         'VOY' : list_of_voy,
         'FINAL POD': list_of_pods
         }
+
+    #dict_final = {
+    #    'MATCH': "",
+    #    'BOOKING NUMBER': "",
+    #    'MLO': "",
+    #    'MAN TOD': "",
+    #    'CD TOD': "",
+    #    'CONTAINER': "",
+    #    'MAN ISO TYPE': "",
+    #    'CD ISO TYPE': "",
+    #    'NET WEIGHT': "",
+    #    'MAN LOAD STATUS': list_of_load_status,
+    #    'CD LOAD STATUS': "",
+    #    'GWT': "",
+    #    'IMDG': "",
+    #    'UNNR': "",
+    #    'TEMP': "",
+    #    'OOG': "",
+    #    'REMARK': "",
+    #    'TARE': "",
+    #    'MLO PO': "",
+    #    'CUSTOMS STATUS': "",
+    #    'PACKAGES': "",
+    #    'GOODS DESCRIPTION': "",
+    #    'OCEAN VESSEL': "",
+    #    'VOY': "",
+    #    'FINAL POD': ""
+    #    }   
 
     df = pd.DataFrame(dict_final)
     df.loc[df['CD TOD'].notna(), 'MATCH'] = "MATCH"
