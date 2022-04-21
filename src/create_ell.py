@@ -15,9 +15,6 @@ def work_with_df(df: pd.DataFrame):
     df.loc[:, 'ISO TYPE'] = df['ISO TYPE'].astype(str)
     df.loc[:, 'ISO STATUS'] = df['ISO TYPE'] + df['LOAD STATUS']
     df.loc[:, 'GOODS DESCRIPTION'] = df['GOODS DESCRIPTION'].astype(str)
-
-    # När NET WEIGHT är mindre än 100 men större än 0 multiplicera med 1000
-    df.loc[(df['NET WEIGHT'] < 100) & (df['NET WEIGHT'] != 0), 'NET WEIGHT'] *= 1000
     
     # Lägger till "CHEM" och "MT" om boolean sann
     df.loc[df['IMDG'].notnull(), 'CHEM'] = "CHEM"
@@ -29,7 +26,7 @@ def work_with_df(df: pd.DataFrame):
 
     # Ändrar alla instanser av ZAZBA till ZADUR
     change_pod = df['FINAL POD'] == "ZAZBA"
-    df.loc[change_pod, 'FINAL POD'] = "ZADUR"
+    df.loc[change_pod, 'FINAL POD'] = "ZAPLZ"
 
     # Ändrar MLO till MSK om HSL skeppar tomma enheter
     df.loc[(df['MLO'] == "HSL") & (df['LOAD STATUS'].str.contains("MT")), 'MLO'] = "MSK"
@@ -60,8 +57,8 @@ def work_with_df(df: pd.DataFrame):
     df.loc[:, 'MAX WEIGHT'] = fn.get_max_weight(df) / 1000   # div med 1000 för tonvikt
 
     # Lägger till vikt i 'VGM-LA' om inte "MT" i kolumn
-    mt_check = df['LOAD STATUS'] != "MT"
-    df.loc[mt_check, 'VGM-LA'] = df['MAX WEIGHT']
+    mt_check_boolean = df['LOAD STATUS'] != "MT"
+    df.loc[mt_check_boolean, 'VGM-LA'] = df['MAX WEIGHT']
 
     # Ytterligare två conditions men som skapar df['TRANSHIPMENT']
     conditions_pod =[
