@@ -156,6 +156,14 @@ def terminal_check(df: pd.DataFrame):
     df.loc[np.logical_not(df['CONCAT'].isin(df_csv['CONCAT'])), 'TERMINAL_CHECK'] = False
     return df['TERMINAL_CHECK']
 
+def terminal_check_continent(df: pd.DataFrame):
+    df_csv = get_csv_data('terminal').copy()
+    df_csv['CONCAT'] = df_csv['PORT'] + df_csv['TERMINAL']
+    df['CONCAT'] = df['POL_CONTINENT'] + df['TOL_CONTINENT']
+    df.loc[df['CONCAT'].isin(df_csv['CONCAT']), 'TERMINAL_CHECK'] = True
+    df.loc[np.logical_not(df['CONCAT'].isin(df_csv['CONCAT'])), 'TERMINAL_CHECK'] = False
+    return df['TERMINAL_CHECK']
+
 def container_check(container_no: str):
     var_dict = {
         "A":10, "B":12, "C":13, "D":14, "E":15, "F":16, "G":17,
